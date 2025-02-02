@@ -1,15 +1,15 @@
 # **Compiler Project (CMPT 432)** 
-**Author:** Neo Pi 
-**Course:** compilers (CMPT 432)
-**Instuctor:** Alan G. Labousseur 
-**Langauge**: TypeScript
-**Development Tools**: Node.js, TypeScript, ts-node, nodemon, ESLint 
+**Author:** Neo Pi  
+**Course:** compilers (CMPT 432)  
+**Instuctor:** Alan G. Labousseur  
+**Langauge**: TypeScript  
+**Development Tools**: Node.js, TypeScript, ts-node, nodemon, ESLint  
 
 --- 
 
 ## **Project Description** 
-This project is a **compiler written in TypeScript** for the CMPT432 Course
-Goal: Design, implement, and test a compiler from scratch
+This project is a **compiler written in TypeScript** for the CMPT432 Course  
+**Goal:** Design, implement, and test a compiler from scratch
 
 ---
 
