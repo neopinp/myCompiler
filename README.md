@@ -1,5 +1,3 @@
-# myCompiler
-Creating a compiler in TypeScript 
 # **Compiler Project (CMPT 432)** 
 **Author:** Neo Pi 
 **Course:** compilers (CMPT 432)
@@ -10,7 +8,7 @@ Creating a compiler in TypeScript
 --- 
 
 ## **Project Description** 
-This project is a **compiler written in TypeScript** for the CMPT 432 Compilers Course 
+This project is a **compiler written in TypeScript** for the CMPT432 Course
 Goal: Design, implement, and test a compiler from scratch
 
 ---
