@@ -1,7 +1,7 @@
 export class Token {
   constructor(
     public type: TokenType,
-    public value: string,
+    public value: string, // should be currentChar?
     public line: number,
     public column: number
   ) {}
@@ -12,7 +12,7 @@ export class Token {
 }
 
 export enum TokenType {
-  OPENBLOCK = "OPEN_BLOCK",       // {
+  OPEN_BLOCK = "OPEN_BLOCK",       // {
   CLOSE_BLOCK = "CLOSE_BLOCK",    // }
   PRINT = "PRINT",              
   WHILE = "WHILE",              

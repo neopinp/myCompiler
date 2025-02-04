@@ -6,7 +6,6 @@ TESTING
 
 import { Token, TokenType } from "./token";
 import { logInfo, logDebug, logError } from "./utils";
-import * as fs from "fs"; // input.xt
 
 export class Lexer {
   private source: string = "";
@@ -60,8 +59,6 @@ export class Lexer {
     return this.tokens;
   }
 
-
-
   private handleWhiteSpace(): void {
     if (this.currentChar === "\n") {
       this.line++;
@@ -73,8 +70,8 @@ export class Lexer {
     this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
     this.advance();
   }
-  
 
+  // KEYWORDS & IDENTIFIERS 
   private tokenizeIdentifier(): void {
     let startColumn = 0; // start of identifier
     let identifier = "";
