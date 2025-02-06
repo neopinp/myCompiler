@@ -1,1 +1,28 @@
-<script type="module" src="dist/main.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>neosCompiler - TS</title>
+  </head>
+  <body>
+    <h1>TypeScript Compiler</h1>
+    <textarea
+      id="sourceCode"
+      rows="10"
+      cols="50"
+      placeholder="Enter your code here..."
+    ></textarea>
+    <button id="run-button">Run Compiler</button>
+
+    <h2>Output:</h2>
+    <pre id="output"></pre>
+
+    <script type="module">
+      import { runCompiler } from "./dist/gui.js"; 
+      document.getElementById("run-button").addEventListener("click", () => {
+        runCompiler();
+      });
+    </script>
+  </body>
+</html>

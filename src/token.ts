@@ -1,7 +1,7 @@
 export class Token {
   constructor(
     public type: TokenType,
-    public value: string, // should be currentChar?
+    public value: string, 
     public line: number,
     public column: number
   ) {}
@@ -23,7 +23,7 @@ export enum TokenType {
   BOOLEAN_LITERAL = "BOOLEAN_LITERAL", // true | false
   IDENTIFIER = "IDENTIFIER",      // a-z 
   DIGIT = "DIGIT",                // 0-9
-  STRINg = "STRING",              
+  STRING = "STRING",              
   ASSIGN_OP = "ASSIGN_OP",        // =
   INT_OP = "INT_OP",              // +
   BOOL_OP = "BOOL_OP",            // == | !=

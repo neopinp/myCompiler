@@ -2,10 +2,10 @@
 PROVIDE ERRORS AND WARNINGS WITH DETAILED MESSAGES
 VERBOSE OUTPUT MODE (DEBUG AND INFO LOGS)
 TESTING
- */
+ */ 
 
-import { Token, TokenType } from "./token";
-import { logInfo, logDebug, logError } from "./utils";
+import { Token, TokenType } from "./token.js";
+import { logInfo, logError } from "./utils.js";
 
 export class Lexer {
   private source: string = "";
@@ -14,6 +14,7 @@ export class Lexer {
   private line: number = 1;
   private column: number = 0;
   private position: number = 0;
+  public errors: {message: string, line: number, column: number}[] = [];
 
   constructor(source: string) {
     this.source = source;
@@ -47,11 +48,7 @@ export class Lexer {
       } else if (/\d/.test(this.currentChar)) {
         this.addToken(TokenType.DIGIT);
       } else {
-        logError(
-          `Unrecognized character '${this.currentChar}'`,
-          this.line,
-          this.column
-        );
+        this.reportError(`Unrecognized character '${this.currentChar}'`);
         this.advance();
       }
     }
@@ -59,19 +56,7 @@ export class Lexer {
     return this.tokens;
   }
 
-  private handleWhiteSpace(): void {
-    if (this.currentChar === "\n") {
-      this.line++;
-      this.column = 0;
-    }
-    this.advance();
-  }
-  private addToken(type: TokenType): void {
-    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
-    this.advance();
-  }
-
-  // KEYWORDS & IDENTIFIERS 
+  // KEYWORDS & IDENTIFIERS
   private tokenizeIdentifier(): void {
     let startColumn = 0; // start of identifier
     let identifier = "";
@@ -100,5 +85,22 @@ export class Lexer {
 
     const tokenType = keywords[identifier] || TokenType.IDENTIFIER;
     this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
+  }
+
+  private handleWhiteSpace(): void {
+    if (this.currentChar === "\n") {
+      this.line++;
+      this.column = 0;
+    }
+    this.advance();
+  }
+  private addToken(type: TokenType): void {
+    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
+    this.advance();
+  }
+  // for immediate reporting / storing for output at completion
+  private reportError(message: string): void {
+    logError(message, this.line, this.column);
+    this.errors.push({message, line: this.line, column: this.column})
   }
 }

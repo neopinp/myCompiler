@@ -1,0 +1,7 @@
+* ABC123DEF345 *
+DEBUG Lexer - IDENTIFIER [abc] found at (1: 0)
+DEBUG Lexer - DIGIT [1] found at (1: 4)
+DEBUG Lexer - DIGIT [2] found at (1: 5)
+DEBUG Lexer - DIGIT [3] found at (1: 6)
+DEBUG Lexer - IDENTIFIER [def] found at (1: 0)
+p: why is the second identifier found at column 0 again but digits successfully increment ?
