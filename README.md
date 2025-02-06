@@ -3,7 +3,7 @@
 **Course:** compilers (CMPT 432)  
 **Instuctor:** Alan G. Labousseur  
 **Langauge**: TypeScript  
-**Development Tools**: Node.js, TypeScript, ts-node, nodemon, ESLint  
+**Development Tools**: Node.js, TypeScript, ts-node, ESLint  
 
 --- 
 
