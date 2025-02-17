@@ -18,6 +18,12 @@ export class Lexer {
 
   constructor(source: string) {
     this.source = source;
+    this.tokens = [];
+    this.currentChar = "";
+    this.line = 1;
+    this.column = 0;
+    this.position = 0;
+    this.errors = [];
     this.advance();
   }
 
@@ -30,6 +36,13 @@ export class Lexer {
       this.currentChar = "\0"; // END OF FILE MARKER
     }
   }
+  private addToken(type: TokenType): void {
+    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
+    this.advance();
+  }
+
+  // Start token rules from most specific to least specific 
+  // continue to read characters until you hit a $EOP or whitespace 
 
   public tokenize(): Token[] {
     logInfo("Starting Lexical Analysis...");
@@ -94,10 +107,11 @@ export class Lexer {
     }
     this.advance();
   }
-  private addToken(type: TokenType): void {
-    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
-    this.advance();
-  }
+
+
+
+
+
   // for immediate reporting / storing for output at completion
   private reportError(message: string): void {
     logError(message, this.line, this.column);
