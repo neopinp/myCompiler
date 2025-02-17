@@ -59,7 +59,11 @@ export class Lexer {
       } else if (/[a-z]/.test(this.currentChar)) {
         this.tokenizeIdentifier();
       } else if (/\d/.test(this.currentChar)) {
-        this.addToken(TokenType.DIGIT);
+        this.tokenizeNumber();
+      } else if (this.currentChar === "=") {
+        this.tokenizeEquals();
+      } else if (this.currentChar === "!") {
+        this.tokenizeNotEquals();
       } else {
         this.reportError(`Unrecognized character '${this.currentChar}'`);
         this.advance();
@@ -77,6 +81,8 @@ export class Lexer {
     Start token searching at alpha char
     If Identifier === keywords[identifier] type === keyword | identifier 
     KEYWORDS === predefined words that cannot be used as variables
+
+    EDIT: should use longet match + rule order 
     */
 
     while (/[a-z]/.test(this.currentChar)) {
@@ -100,6 +106,29 @@ export class Lexer {
     this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
   }
 
+  private tokenizeEquals() {
+
+  }
+  private tokenizeNotEquals() {
+
+  }
+  private tokenizeNumber() {
+    let startColumn = this.column;
+    let number = '';
+
+    while (/\d/.test(this.currentChar)) {
+      number += this.currentChar;
+      this.advance();
+    }
+    this.tokens.push(new Token (TokenType.DIGIT, number, this.line, this.column));
+  }
+
+
+
+
+
+
+
   private handleWhiteSpace(): void {
     if (this.currentChar === "\n") {
       this.line++;
@@ -107,11 +136,6 @@ export class Lexer {
     }
     this.advance();
   }
-
-
-
-
-
   // for immediate reporting / storing for output at completion
   private reportError(message: string): void {
     logError(message, this.line, this.column);
