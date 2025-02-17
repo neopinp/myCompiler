@@ -104,6 +104,8 @@ export class Lexer {
         this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
     }
     tokenizeEquals() {
+        let startColumn = '';
+        this.advance();
     }
     tokenizeNotEquals() {
     }

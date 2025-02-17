@@ -107,7 +107,9 @@ export class Lexer {
   }
 
   private tokenizeEquals() {
-
+    let startColumn = '';
+    this.advance();
+    
   }
   private tokenizeNotEquals() {
 
