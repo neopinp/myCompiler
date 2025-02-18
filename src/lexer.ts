@@ -57,6 +57,10 @@ export class Lexer {
         this.addToken(TokenType.OPEN_BLOCK);
       } else if (this.currentChar === "}") {
         this.addToken(TokenType.CLOSE_BLOCK);
+      } else if (this.currentChar === "(") {
+        this.addToken(TokenType.LPAREN);
+      } else if (this.currentChar === ")") {
+        this.addToken(TokenType.RPAREN);
       } else if (this.currentChar === "$") {
         this.addToken(TokenType.EOP);
       } else if (this.currentChar === "+") {

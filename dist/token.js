@@ -31,8 +31,8 @@ export var TokenType;
     TokenType["ASSIGN_OP"] = "ASSIGN_OP";
     TokenType["INT_OP"] = "INT_OP";
     TokenType["BOOL_OP"] = "BOOL_OP";
-    TokenType["LPAREN"] = "OPAREN";
-    TokenType["RPAREN"] = "CPAREN";
+    TokenType["LPAREN"] = "L-PAREN";
+    TokenType["RPAREN"] = "R-PAREN";
     TokenType["EOP"] = "EOP";
     TokenType["COMMENT"] = "COMMENT";
     TokenType["INVALID"] = "INVALID"; // unkown token 
