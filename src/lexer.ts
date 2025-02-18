@@ -18,6 +18,12 @@ export class Lexer {
 
   constructor(source: string) {
     this.source = source;
+    this.tokens = [];
+    this.currentChar = "";
+    this.line = 1;
+    this.column = 0;
+    this.position = 0;
+    this.errors = [];
     this.advance();
   }
 
@@ -30,6 +36,13 @@ export class Lexer {
       this.currentChar = "\0"; // END OF FILE MARKER
     }
   }
+  private addToken(type: TokenType): void {
+    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
+    this.advance();
+  }
+
+  // Start token rules from most specific to least specific 
+  // continue to read characters until you hit a $EOP or whitespace 
 
   public tokenize(): Token[] {
     logInfo("Starting Lexical Analysis...");
@@ -46,7 +59,11 @@ export class Lexer {
       } else if (/[a-z]/.test(this.currentChar)) {
         this.tokenizeIdentifier();
       } else if (/\d/.test(this.currentChar)) {
-        this.addToken(TokenType.DIGIT);
+        this.tokenizeNumber();
+      } else if (this.currentChar === "=") {
+        this.tokenizeEquals();
+      } else if (this.currentChar === "!") {
+        this.tokenizeNotEquals();
       } else {
         this.reportError(`Unrecognized character '${this.currentChar}'`);
         this.advance();
@@ -64,6 +81,8 @@ export class Lexer {
     Start token searching at alpha char
     If Identifier === keywords[identifier] type === keyword | identifier 
     KEYWORDS === predefined words that cannot be used as variables
+
+    EDIT: should use longet match + rule order 
     */
 
     while (/[a-z]/.test(this.currentChar)) {
@@ -87,15 +106,36 @@ export class Lexer {
     this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
   }
 
+  private tokenizeEquals() {
+    let startColumn = '';
+    this.advance();
+    
+  }
+  private tokenizeNotEquals() {
+
+  }
+  private tokenizeNumber() {
+    let startColumn = this.column;
+    let number = '';
+
+    while (/\d/.test(this.currentChar)) {
+      number += this.currentChar;
+      this.advance();
+    }
+    this.tokens.push(new Token (TokenType.DIGIT, number, this.line, this.column));
+  }
+
+
+
+
+
+
+
   private handleWhiteSpace(): void {
     if (this.currentChar === "\n") {
       this.line++;
       this.column = 0;
     }
-    this.advance();
-  }
-  private addToken(type: TokenType): void {
-    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
     this.advance();
   }
   // for immediate reporting / storing for output at completion
