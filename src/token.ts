@@ -23,7 +23,8 @@ export enum TokenType {
   BOOLEAN_LITERAL = "BOOLEAN_LITERAL", // true | false
   IDENTIFIER = "IDENTIFIER",      // a-z 
   DIGIT = "DIGIT",                // 0-9
-  STRING = "STRING",              
+  CHAR_LIST = "CHAR_LIST",        // char(s) in quotes
+  CHAR = "CHAR",              
   ASSIGN_OP = "ASSIGN_OP",        // =
   INT_OP = "INT_OP",              // +
   BOOL_OP = "BOOL_OP",            // == | !=

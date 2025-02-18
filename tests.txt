@@ -1,19 +1,40 @@
-* ABC123DEF345 *
----------------------------------------------------------------------
-DEBUG Lexer - IDENTIFIER [abc] found at (1: 0)
-DEBUG Lexer - DIGIT [1] found at (1: 4)
-DEBUG Lexer - DIGIT [2] found at (1: 5)
-DEBUG Lexer - DIGIT [3] found at (1: 6)
-DEBUG Lexer - IDENTIFIER [def] found at (1: 0)
+* ABC123DEF345 * - WORKING
+--------------------------------------------------
+
+--------------------------------------------------
+
+
+TESTING INT_OP - WORKING
+* x+5, x + 5, x = 5 + 3 * 
+---------------------------------------
+DEBUG Lexer - BOOL_OP [=] found at (1: 3)
+3: mistaken for BoolOp and not AssignOp - accidentally pushed token as boolop for both, just changed to TokenType.AssignOp
+working
+
+* ++ *
+Should produce an error? or two + tokens  
+------------------------------------------
+
 
 if x == 5 {
-  print("Hello")
+  print("Hello") TESTING BOOL_OP - WORKING
 }
 ----------------------------------------------------------------------
-Issues 
+ERRORS
 - differentiating identifiers from strings, need to search for quotes
 - IDENTIFIER [ello] need to include caps letters 
 - move past opening quote, otherwise it will be classiifed as an identifier 
 - () implement checking for parentheses 
 
+- should output char by char instead of string [hello] ****
+------------------------------------------------------------------------
 
+
+
+
+
+
+Running Thoughts / Questions / Edge Cases to Test 
+--------------------------------------------------
+What happens if the user forgets a closing "?
+What happens if the program contains ("Hello\nWorld")?

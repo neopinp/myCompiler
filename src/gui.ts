@@ -25,7 +25,7 @@ export function runCompiler(): void {
 
   // RETURN ERRORS LAST 
   if (lexer.errors.length > 0) {
-    logError(`Lex Failed with: ${lexer.errors.length} error(s)`, -1, -1);
+    logInfo(`Lex Failed with: ${lexer.errors.length} error(s)`); // not logging to screen for some reason, but logInfo itself works within other functions, successfully logging in console though
     lexer.errors.forEach((error) => {
       logError(error.message, error.line, error.column);
     })

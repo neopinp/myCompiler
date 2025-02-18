@@ -56,6 +56,9 @@ export class Lexer {
             else if (this.currentChar === "$") {
                 this.addToken(TokenType.EOP);
             }
+            else if (this.currentChar === "+") {
+                this.addToken(TokenType.INT_OP);
+            }
             else if (this.currentChar === '"') {
                 this.tokenizeString();
             }
@@ -81,14 +84,14 @@ export class Lexer {
     }
     // KEYWORDS & IDENTIFIERS
     tokenizeIdentifier() {
-        let startColumn = 0; // start of identifier
+        let startColumn = this.column; // start of identifier
         let identifier = "";
         /*
         Start token searching at alpha char
         If Identifier === keywords[identifier] type === keyword | identifier
         KEYWORDS === predefined words that cannot be used as variables
-    
-        EDIT: should use longet match + rule order
+        
+        EDIT: should use longest match + rule order
         */
         while (/[a-z]/.test(this.currentChar)) {
             identifier += this.currentChar;
@@ -113,12 +116,21 @@ export class Lexer {
     Contains [a-z] and spaces
     */
     tokenizeString() {
-        let startColumn = this.column;
-        let stringExpr = "";
-        this.advance();
+        let startColumn = this.column; // Capture starting column of the quote
+        // Opening quote
+        if (this.currentChar === '"') {
+            this.tokens.push(new Token(TokenType.CHAR_LIST, this.currentChar, this.line, this.column));
+            this.advance();
+        }
+        else {
+            this.reportError(`Unterminated string literal starting at ${this.line}:${startColumn}`);
+            return;
+        }
+        // Process each character inside the string
         while (this.currentChar !== '"' && this.currentChar !== "\0") {
-            if (/[A-Za-z]/.test(this.currentChar)) {
-                stringExpr += this.currentChar;
+            if (/[a-z]/.test(this.currentChar)) {
+                // Assuming only lowercase characters are valid
+                this.tokens.push(new Token(TokenType.CHAR, this.currentChar, this.line, this.column));
                 this.advance();
             }
             else {
@@ -126,12 +138,13 @@ export class Lexer {
                 this.advance();
             }
         }
+        // Closing quote
         if (this.currentChar === '"') {
-            this.tokens.push(new Token(TokenType.STRING, `"${stringExpr}"`, this.line, startColumn));
+            this.tokens.push(new Token(TokenType.CHAR_LIST, this.currentChar, this.line, this.column));
             this.advance();
         }
         else {
-            this.reportError(`Unterminted string literal strating at ${this.line}:${startColumn}`);
+            this.reportError(`Missing closing quote for string starting at ${this.line}:${startColumn}`);
         }
     }
     // Longest Match First - Check if there is a following '=' for "=="
@@ -143,7 +156,7 @@ export class Lexer {
             this.tokens.push(new Token(TokenType.BOOL_OP, "==", this.line, startColumn));
         }
         else {
-            this.tokens.push(new Token(TokenType.BOOL_OP, "=", this.line, startColumn));
+            this.tokens.push(new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn));
         }
     }
     tokenizeNotEquals() {

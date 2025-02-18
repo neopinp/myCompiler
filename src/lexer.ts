@@ -38,6 +38,7 @@ export class Lexer {
       this.currentChar = "\0"; // END OF FILE MARKER
     }
   }
+
   private addToken(type: TokenType): void {
     this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
     this.advance();
@@ -58,6 +59,8 @@ export class Lexer {
         this.addToken(TokenType.CLOSE_BLOCK);
       } else if (this.currentChar === "$") {
         this.addToken(TokenType.EOP);
+      } else if (this.currentChar === "+") {
+        this.addToken(TokenType.INT_OP);
       } else if (this.currentChar === '"') {
         this.tokenizeString();
       } else if (/[a-z]/.test(this.currentChar)) {
@@ -79,14 +82,14 @@ export class Lexer {
 
   // KEYWORDS & IDENTIFIERS
   private tokenizeIdentifier(): void {
-    let startColumn = 0; // start of identifier
+    let startColumn = this.column; // start of identifier
     let identifier = "";
     /* 
     Start token searching at alpha char
     If Identifier === keywords[identifier] type === keyword | identifier 
     KEYWORDS === predefined words that cannot be used as variables
-
-    EDIT: should use longet match + rule order 
+    
+    EDIT: should use longest match + rule order 
     */
 
     while (/[a-z]/.test(this.currentChar)) {
@@ -114,29 +117,45 @@ export class Lexer {
   Capture all characters AND SPACES until you reach a closing quote 
   Contains [a-z] and spaces 
   */
-  private tokenizeString() {
-    let startColumn = this.column;
-    let stringExpr = "";
+  private tokenizeString(): void {
+    let startColumn = this.column; // Capture starting column of the quote
 
-    this.advance();
+    // Opening quote
+    if (this.currentChar === '"') {
+      this.tokens.push(
+        new Token(TokenType.CHAR_LIST, this.currentChar, this.line, this.column)
+      );
+      this.advance();
+    } else {
+      this.reportError(
+        `Unterminated string literal starting at ${this.line}:${startColumn}`
+      );
+      return;
+    }
 
+    // Process each character inside the string
     while (this.currentChar !== '"' && this.currentChar !== "\0") {
-      if (/[A-Za-z]/.test(this.currentChar)) {
-        stringExpr += this.currentChar;
+      if (/[a-z]/.test(this.currentChar)) {
+        // Assuming only lowercase characters are valid
+        this.tokens.push(
+          new Token(TokenType.CHAR, this.currentChar, this.line, this.column)
+        );
         this.advance();
       } else {
         this.reportError(`Invalid character ${this.currentChar} in string.`);
         this.advance();
       }
     }
+
+    // Closing quote
     if (this.currentChar === '"') {
       this.tokens.push(
-        new Token(TokenType.STRING, `"${stringExpr}"`, this.line, startColumn)
+        new Token(TokenType.CHAR_LIST, this.currentChar, this.line, this.column)
       );
       this.advance();
     } else {
       this.reportError(
-        `Unterminted string literal strating at ${this.line}:${startColumn}`
+        `Missing closing quote for string starting at ${this.line}:${startColumn}`
       );
     }
   }
@@ -152,7 +171,7 @@ export class Lexer {
       );
     } else {
       this.tokens.push(
-        new Token(TokenType.BOOL_OP, "=", this.line, startColumn)
+        new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn)
       );
     }
   }
