@@ -30,6 +30,6 @@ export function runCompiler(): void {
       logError(error.message, error.line, error.column);
     })
   } else {
-    logInfo(`Lex completed 0 errors`)
+    logInfo(`Lex completed: 0 errors`)
   }
 }

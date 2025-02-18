@@ -27,6 +27,7 @@ npm install # (TypeScript, ts-node, nodemon, ESLint)
 node -v # Check Node.js version
 npm -v  # Check npm version 
 git --version # Check Git version 
+tsc --watch # Compile while editing 
 ```
 
 ---

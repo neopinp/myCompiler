@@ -21,7 +21,7 @@ export function runCompiler() {
         });
     }
     else {
-        logInfo(`Lex completed 0 errors`);
+        logInfo(`Lex completed: 0 errors`);
     }
 }
 //# sourceMappingURL=gui.js.map

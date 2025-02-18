@@ -7,6 +7,7 @@ import { Token, TokenType } from "./token.js";
 import { logInfo, logError } from "./utils.js";
 export class Lexer {
     source = "";
+    programID = 1;
     tokens = [];
     currentChar = ""; // different than value?
     line = 1;
@@ -15,6 +16,7 @@ export class Lexer {
     errors = [];
     constructor(source) {
         this.source = source;
+        this.programID = 1;
         this.tokens = [];
         this.currentChar = "";
         this.line = 1;
@@ -37,10 +39,10 @@ export class Lexer {
         this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
         this.advance();
     }
-    // Start token rules from most specific to least specific 
-    // continue to read characters until you hit a $EOP or whitespace 
+    // Start token rules from most specific to least specific
+    // continue to read characters until you hit a $EOP or whitespace
     tokenize() {
-        logInfo("Starting Lexical Analysis...");
+        logInfo(`Lexing Program ${this.programID}`);
         while (this.currentChar != "\0") {
             if (/\s/.test(this.currentChar)) {
                 this.handleWhiteSpace();
@@ -53,6 +55,9 @@ export class Lexer {
             }
             else if (this.currentChar === "$") {
                 this.addToken(TokenType.EOP);
+            }
+            else if (this.currentChar === '"') {
+                this.tokenizeString();
             }
             else if (/[a-z]/.test(this.currentChar)) {
                 this.tokenizeIdentifier();
@@ -103,20 +108,63 @@ export class Lexer {
         const tokenType = keywords[identifier] || TokenType.IDENTIFIER;
         this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
     }
-    tokenizeEquals() {
-        let startColumn = '';
+    /* STRINGS - " "
+    Capture all characters AND SPACES until you reach a closing quote
+    Contains [a-z] and spaces
+    */
+    tokenizeString() {
+        let startColumn = this.column;
+        let stringExpr = "";
         this.advance();
+        while (this.currentChar !== '"' && this.currentChar !== "\0") {
+            if (/[A-Za-z]/.test(this.currentChar)) {
+                stringExpr += this.currentChar;
+                this.advance();
+            }
+            else {
+                this.reportError(`Invalid character ${this.currentChar} in string.`);
+                this.advance();
+            }
+        }
+        if (this.currentChar === '"') {
+            this.tokens.push(new Token(TokenType.STRING, `"${stringExpr}"`, this.line, startColumn));
+            this.advance();
+        }
+        else {
+            this.reportError(`Unterminted string literal strating at ${this.line}:${startColumn}`);
+        }
+    }
+    // Longest Match First - Check if there is a following '=' for "=="
+    tokenizeEquals() {
+        let startColumn = this.column;
+        this.advance();
+        if (this.currentChar === "=") {
+            this.advance();
+            this.tokens.push(new Token(TokenType.BOOL_OP, "==", this.line, startColumn));
+        }
+        else {
+            this.tokens.push(new Token(TokenType.BOOL_OP, "=", this.line, startColumn));
+        }
     }
     tokenizeNotEquals() {
+        let startColumn = this.column;
+        this.advance();
+        if (this.currentChar === "=") {
+            this.advance();
+            this.tokens.push(new Token(TokenType.BOOL_OP, "!=", this.line, startColumn));
+        }
+        else {
+            this.reportError("Unrecognized token");
+        }
     }
     tokenizeNumber() {
         let startColumn = this.column;
-        let number = '';
+        let number = "";
         while (/\d/.test(this.currentChar)) {
             number += this.currentChar;
             this.advance();
         }
-        this.tokens.push(new Token(TokenType.DIGIT, number, this.line, this.column));
+        this.tokens.push(new Token(TokenType.DIGIT, number, this.line, startColumn));
     }
     handleWhiteSpace() {
         if (this.currentChar === "\n") {
