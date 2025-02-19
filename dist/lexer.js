@@ -3,8 +3,9 @@ PROVIDE ERRORS AND WARNINGS WITH DETAILED MESSAGES
 VERBOSE OUTPUT MODE (DEBUG AND INFO LOGS)
 TESTING
  */
+import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
-import { logInfo, logError } from "./utils.js";
+import { logInfo, logError, logDebug } from "./utils.js";
 export class Lexer {
     source = "";
     programID = 1;
@@ -14,6 +15,7 @@ export class Lexer {
     column = 0;
     position = 0;
     errors = [];
+    warnings = [];
     constructor(source) {
         this.source = source;
         this.programID = 1;
@@ -23,6 +25,7 @@ export class Lexer {
         this.column = 0;
         this.position = 0;
         this.errors = [];
+        this.warnings = [];
         this.advance();
     }
     advance() {
@@ -43,7 +46,9 @@ export class Lexer {
     // continue to read characters until you hit a $EOP or whitespace
     tokenize() {
         logInfo(`Lexing Program ${this.programID}`);
+        let foundEOP = false;
         while (this.currentChar != "\0") {
+            // add tokens as you retrieve them (if tokens > 0) to the gui
             if (/\s/.test(this.currentChar)) {
                 this.handleWhiteSpace();
             }
@@ -58,9 +63,6 @@ export class Lexer {
             }
             else if (this.currentChar === ")") {
                 this.addToken(TokenType.RPAREN);
-            }
-            else if (this.currentChar === "$") {
-                this.addToken(TokenType.EOP);
             }
             else if (this.currentChar === "+") {
                 this.addToken(TokenType.INT_OP);
@@ -80,12 +82,25 @@ export class Lexer {
             else if (this.currentChar === "!") {
                 this.tokenizeNotEquals();
             }
+            else if (this.currentChar === "$") {
+                this.tokenizeEOP();
+                foundEOP = true;
+                this.outputTokens(); // remove and place somewhere else - causing too much trouble
+                reportWarningsandErrors(this);
+                this.programID++;
+                // ADD CHECKING FOR MORE PROGRAMS BEFORE OUPTTING THIS MESSAGE
+                logInfo(`Lexing Program ${this.programID}`);
+            }
             else {
-                this.reportError(`Unrecognized character '${this.currentChar}'`);
+                this.reportError(`Unrecognized character '${this.currentChar}'`); // add errors as you get them
                 this.advance();
             }
         }
-        logInfo("Lexical analysis complete.");
+        if (!foundEOP) {
+            this.reportWarning("Program is missing an EOP ($) at the end");
+            this.outputTokens();
+            reportWarningsandErrors(this);
+        }
         return this.tokens;
     }
     // KEYWORDS & IDENTIFIERS
@@ -108,10 +123,10 @@ export class Lexer {
             print: TokenType.PRINT,
             while: TokenType.WHILE,
             if: TokenType.IF,
-            int: TokenType.INT_TYPE,
-            string: TokenType.STRING_TYPE,
-            boolean: TokenType.BOOLEAN_LITERAL,
-            true: TokenType.BOOLEAN_TYPE,
+            int: TokenType.VAR_TYPE,
+            string: TokenType.VAR_TYPE,
+            boolean: TokenType.VAR_TYPE,
+            true: TokenType.BOOLEAN_LITERAL,
             false: TokenType.BOOLEAN_LITERAL,
         };
         const tokenType = keywords[identifier] || TokenType.IDENTIFIER;
@@ -185,6 +200,10 @@ export class Lexer {
         }
         this.tokens.push(new Token(TokenType.DIGIT, number, this.line, startColumn));
     }
+    tokenizeEOP() {
+        this.tokens.push(new Token(TokenType.EOP, this.currentChar, this.line, this.column));
+        this.advance();
+    }
     handleWhiteSpace() {
         if (this.currentChar === "\n") {
             this.line++;
@@ -192,10 +211,19 @@ export class Lexer {
         }
         this.advance();
     }
-    // for immediate reporting / storing for output at completion
+    // for immediate reporting / storing for output at completion - move to gui.ts
     reportError(message) {
         logError(message, this.line, this.column);
         this.errors.push({ message, line: this.line, column: this.column });
+    }
+    reportWarning(message) {
+        this.warnings.push({ message, line: this.line, column: this.column });
+    }
+    // OUTPUT VALID TOKENS
+    outputTokens() {
+        this.tokens.forEach((token) => {
+            logDebug(`${token.type} [${token.value}] found at (${token.line}: ${token.column})`);
+        });
     }
 }
 //# sourceMappingURL=lexer.js.map

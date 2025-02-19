@@ -17,9 +17,7 @@ export enum TokenType {
   PRINT = "PRINT",              
   WHILE = "WHILE",              
   IF = "IF",                    
-  INT_TYPE = "INT_TYPE",          // int
-  STRING_TYPE = "STRING_TYPE",    // string
-  BOOLEAN_TYPE = "BOOEAL_TYPE",   // boolean
+  VAR_TYPE = "VAR_TYPE",          // int
   BOOLEAN_LITERAL = "BOOLEAN_LITERAL", // true | false
   IDENTIFIER = "IDENTIFIER",      // a-z 
   DIGIT = "DIGIT",                // 0-9

@@ -1,23 +1,37 @@
-* ABC123DEF345 * - WORKING
+ABC123DEF345  - WORKING assuming only lowercase for identifiers 
 --------------------------------------------------
-
---------------------------------------------------
-
+ERROR -  Lexer - (1:2)
+ERROR -  Lexer - (1:3)
+ERROR -  Lexer - (1:4)
+ERROR -  Lexer - (1:8)
+ERROR -  Lexer - (1:9)
+ERROR -  Lexer - (1:10)
+INFO Lexer - Lexical analysis complete.
+DEBUG Lexer - DIGIT [123] found at (1: 5)
+DEBUG Lexer - DIGIT [345] found at (1: 11)
+INFO Lexer - Lex Failed with: 6 error(s)
+ERROR -  Lexer - (1:2)
+ERROR -  Lexer - (1:3)
+ERROR -  Lexer - (1:4)
+ERROR -  Lexer - (1:8)
+ERROR -  Lexer - (1:9)
+ERROR -  Lexer - (1:10)
+\--------------------------------------------------\
 
 TESTING INT_OP - WORKING
-* x+5, x + 5, x = 5 + 3 * 
+x+5, x + 5, x = 5 + 3 
 ---------------------------------------
 DEBUG Lexer - BOOL_OP [=] found at (1: 3)
-3: mistaken for BoolOp and not AssignOp - accidentally pushed token as boolop for both, just changed to TokenType.AssignOp
-working
+3: mistaken for BoolOp and not AssignOp - accidentally pushed token as boolop for both, just changed to TokenType.AssignOp - WORKING 
 
-* ++ *
+++ 
+---------
 Should produce an error? or two + tokens  
-------------------------------------------
+\------------------------------------------\
 
-
+TESTING BOOL_OP - WORKING 
 if x == 5 {
-  print("Hello") TESTING BOOL_OP - WORKING
+  print("Hello") 
 }
 ----------------------------------------------------------------------
 ERRORS
@@ -26,11 +40,26 @@ ERRORS
 - move past opening quote, otherwise it will be classiifed as an identifier 
 - () implement checking for parentheses 
 
-- should output char by char instead of string [hello] ****
-------------------------------------------------------------------------
+- should output char by char instead of string [hello] **** - WORKING 
+\------------------------------------------------------------------------\
 
+TESTING CHAR_LIST AND CHAR - WORKING 
+"pizza"
+---------------------------------------------------------------------
+Originally implemented to output as string['abc']
+Changed to output line by line 
 
-
+INFO Lexer - Lexing Started...
+INFO Lexer - Lexing Program 1
+INFO Lexer - Lexical analysis complete.
+DEBUG Lexer - CHAR_LIST ["] found at (1: 1)
+DEBUG Lexer - CHAR [p] found at (1: 2)
+DEBUG Lexer - CHAR [i] found at (1: 3)
+DEBUG Lexer - CHAR [z] found at (1: 4)
+DEBUG Lexer - CHAR [z] found at (1: 5)
+DEBUG Lexer - CHAR [a] found at (1: 6)
+DEBUG Lexer - CHAR_LIST ["] found at (1: 7)
+INFO Lexer - Lex completed: 0 errors
 
 
 
@@ -38,3 +67,23 @@ Running Thoughts / Questions / Edge Cases to Test
 --------------------------------------------------
 What happens if the user forgets a closing "?
 What happens if the program contains ("Hello\nWorld")?
+
+EDGE CASES:
+intaintba=0b=
+missing closing block or parentheses
+
+
+
+
+
+as#c
+INFO ->  Lexer - Lexing Started...
+INFO ->  Lexer - Lexing Program 1
+ERROR - Lexer - (1:3): Unrecognized character '#'
+INFO ->  Lexer - Lex Completed with: 1 warning(s).
+WARNING - (1:4): Program is missing an EOP ($) at the end
+INFO ->  Lexer - Lex Failed with: 1 error(s)
+ERROR - Lexer - (1:3): Unrecognized character '#'
+
+
+

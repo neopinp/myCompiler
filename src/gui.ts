@@ -1,35 +1,47 @@
 // BROWSER UI INTERACTIONS
 import { Lexer } from "./lexer.js";
-import { logInfo, logDebug, logError } from "./utils.js"; 
-
+import { logInfo, logError } from "./utils.js";
 
 export function runCompiler(): void {
   const inputElement = document.getElementById(
     "sourceCode"
   ) as HTMLTextAreaElement;
-  const outputElement = document.getElementById("output") as HTMLElement;
-  outputElement.innerHTML = '';
+  let outputElement = document.getElementById("output") as HTMLElement;
+  outputElement.innerHTML = "";
 
   const sourceCode = inputElement.value;
   logInfo("Lexing Started...");
 
   const lexer = new Lexer(sourceCode);
-  const tokens = lexer.tokenize();
+  lexer.tokenize();
+}
 
-  // RETURN VALID TOKENS FIRST 
-  tokens.forEach((token) => {
-    logDebug(
-      `${token.type} [${token.value}] found at (${token.line}: ${token.column})`
+// TOKENS BEING OUTPUTTED HERE (outputTokens() in EOP)
+
+//  OUTPUT WARNINGS AND ERRORS
+export function reportWarningsandErrors(lexer: Lexer): void {
+  let outputElement = document.getElementById("output") as HTMLElement;
+  // RETURN WARNINGS FIRST
+  if (lexer.warnings.length === 0 && lexer.errors.length === 0) {
+    logInfo(
+      `End of Program ${lexer.programID} with ${lexer.errors.length} error(s) and ${lexer.warnings.length} warnings`
     );
-  });
-
-  // RETURN ERRORS LAST 
-  if (lexer.errors.length > 0) {
-    logInfo(`Lex Failed with: ${lexer.errors.length} error(s)`); // not logging to screen for some reason, but logInfo itself works within other functions, successfully logging in console though
+  }
+  if (lexer.warnings.length > 0 && lexer.errors.length === 0) {
+    lexer.warnings.forEach((warning) => {
+      outputElement.innerHTML += `<span class="warning">WARNING - (${warning.line}:${warning.column}): ${warning.message}</span><br>`;
+    });
+    logInfo(`Lex Completed with: ${lexer.warnings.length} warning(s).`);
+  }
+  if (lexer.warnings.length >= 0 && lexer.errors.length > 0) {
+    lexer.warnings.forEach((warning) => {
+      outputElement.innerHTML += `<span class="warning">WARNING - (${warning.line}:${warning.column}): ${warning.message}</span><br>`;
+    });
     lexer.errors.forEach((error) => {
       logError(error.message, error.line, error.column);
-    })
-  } else {
-    logInfo(`Lex completed: 0 errors`)
+    });
+    logInfo(
+      `Lex Failed with: ${lexer.errors.length} error(s) and ${lexer.warnings.length} warning(s)`
+    );
   }
 }

@@ -4,8 +4,9 @@ VERBOSE OUTPUT MODE (DEBUG AND INFO LOGS)
 TESTING
  */
 
+import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
-import { logInfo, logError } from "./utils.js";
+import { logInfo, logError, logDebug } from "./utils.js";
 
 export class Lexer {
   private source: string = "";
@@ -16,6 +17,7 @@ export class Lexer {
   private column: number = 0;
   private position: number = 0;
   public errors: { message: string; line: number; column: number }[] = [];
+  public warnings: { message: string; line: number; column: number }[] = [];
 
   constructor(source: string) {
     this.source = source;
@@ -26,6 +28,7 @@ export class Lexer {
     this.column = 0;
     this.position = 0;
     this.errors = [];
+    this.warnings = [];
     this.advance();
   }
 
@@ -49,8 +52,10 @@ export class Lexer {
 
   public tokenize(): Token[] {
     logInfo(`Lexing Program ${this.programID}`);
+    let foundEOP = false;
 
     while (this.currentChar != "\0") {
+      // add tokens as you retrieve them (if tokens > 0) to the gui
       if (/\s/.test(this.currentChar)) {
         this.handleWhiteSpace();
       } else if (this.currentChar === "{") {
@@ -61,8 +66,6 @@ export class Lexer {
         this.addToken(TokenType.LPAREN);
       } else if (this.currentChar === ")") {
         this.addToken(TokenType.RPAREN);
-      } else if (this.currentChar === "$") {
-        this.addToken(TokenType.EOP);
       } else if (this.currentChar === "+") {
         this.addToken(TokenType.INT_OP);
       } else if (this.currentChar === '"') {
@@ -75,12 +78,24 @@ export class Lexer {
         this.tokenizeEquals();
       } else if (this.currentChar === "!") {
         this.tokenizeNotEquals();
+      } else if (this.currentChar === "$") {
+        this.tokenizeEOP();
+        foundEOP = true;
+        this.outputTokens(); // remove and place somewhere else - causing too much trouble
+        reportWarningsandErrors(this);
+        this.programID++;
+        // ADD CHECKING FOR MORE PROGRAMS BEFORE OUPTTING THIS MESSAGE
+        logInfo(`Lexing Program ${this.programID}`);
       } else {
-        this.reportError(`Unrecognized character '${this.currentChar}'`);
+        this.reportError(`Unrecognized character '${this.currentChar}'`); // add errors as you get them
         this.advance();
       }
     }
-    logInfo("Lexical analysis complete.");
+    if (!foundEOP) {
+      this.reportWarning("Program is missing an EOP ($) at the end");
+      this.outputTokens();
+      reportWarningsandErrors(this);
+    }
     return this.tokens;
   }
 
@@ -106,10 +121,10 @@ export class Lexer {
       print: TokenType.PRINT,
       while: TokenType.WHILE,
       if: TokenType.IF,
-      int: TokenType.INT_TYPE,
-      string: TokenType.STRING_TYPE,
-      boolean: TokenType.BOOLEAN_LITERAL,
-      true: TokenType.BOOLEAN_TYPE,
+      int: TokenType.VAR_TYPE,
+      string: TokenType.VAR_TYPE,
+      boolean: TokenType.VAR_TYPE,
+      true: TokenType.BOOLEAN_LITERAL,
       false: TokenType.BOOLEAN_LITERAL,
     };
 
@@ -206,6 +221,14 @@ export class Lexer {
     );
   }
 
+  private tokenizeEOP() {
+    this.tokens.push(
+      new Token(TokenType.EOP, this.currentChar, this.line, this.column)
+    );
+
+    this.advance();
+  }
+
   private handleWhiteSpace(): void {
     if (this.currentChar === "\n") {
       this.line++;
@@ -213,9 +236,21 @@ export class Lexer {
     }
     this.advance();
   }
-  // for immediate reporting / storing for output at completion
+  // for immediate reporting / storing for output at completion - move to gui.ts
   private reportError(message: string): void {
     logError(message, this.line, this.column);
     this.errors.push({ message, line: this.line, column: this.column });
+  }
+  private reportWarning(message: string): void {
+    this.warnings.push({ message, line: this.line, column: this.column });
+  }
+
+  // OUTPUT VALID TOKENS
+  private outputTokens(): void {
+    this.tokens.forEach((token) => {
+      logDebug(
+        `${token.type} [${token.value}] found at (${token.line}: ${token.column})`
+      );
+    });
   }
 }
