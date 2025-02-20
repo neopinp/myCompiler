@@ -43,7 +43,6 @@ export class Lexer {
     } else {
       this.currentChar = "\0"; // END OF FILE MARKER
       this.endOfFileReached = true;
-      this.foundEOP = true;
     }
   }
 
