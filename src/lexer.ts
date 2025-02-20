@@ -6,18 +6,20 @@ TESTING
 
 import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
-import { logInfo, logError, logDebug } from "./utils.js";
+import { logInfo, logError, logDebug, logWarning } from "./utils.js";
 
 export class Lexer {
   private source: string = "";
   public programID: number = 1;
   private tokens: Token[] = [];
-  private currentChar: string = ""; // different than value?
+  private currentChar: string = "";
   private line: number = 1;
   private column: number = 0;
   private position: number = 0;
   public errors: { message: string; line: number; column: number }[] = [];
   public warnings: { message: string; line: number; column: number }[] = [];
+  private endOfFileReached: boolean = false;
+  private foundEOP: boolean = false;
 
   constructor(source: string) {
     this.source = source;
@@ -29,6 +31,7 @@ export class Lexer {
     this.position = 0;
     this.errors = [];
     this.warnings = [];
+    this.foundEOP = false;
     this.advance();
   }
 
@@ -39,11 +42,17 @@ export class Lexer {
       this.position++;
     } else {
       this.currentChar = "\0"; // END OF FILE MARKER
+      this.endOfFileReached = true;
+      this.foundEOP = true;
     }
   }
 
-  private addToken(type: TokenType): void {
-    this.tokens.push(new Token(type, this.currentChar, this.line, this.column));
+  private addToken(type: TokenType, startColumn: number): void {
+    const newTokens = new Token(type, this.currentChar, this.line, startColumn);
+    this.tokens.push(newTokens);
+    logDebug(
+      `${newTokens.type} [${newTokens.value}] found at (${newTokens.line}: ${newTokens.column})`
+    );
     this.advance();
   }
 
@@ -52,22 +61,21 @@ export class Lexer {
 
   public tokenize(): Token[] {
     logInfo(`Lexing Program ${this.programID}`);
-    let foundEOP = false;
+    this.foundEOP = false;
 
-    while (this.currentChar != "\0") {
-      // add tokens as you retrieve them (if tokens > 0) to the gui
+    while ((this.currentChar as string) !== "\0") {
       if (/\s/.test(this.currentChar)) {
         this.handleWhiteSpace();
       } else if (this.currentChar === "{") {
-        this.addToken(TokenType.OPEN_BLOCK);
+        this.addToken(TokenType.OPEN_BLOCK, this.column);
       } else if (this.currentChar === "}") {
-        this.addToken(TokenType.CLOSE_BLOCK);
+        this.addToken(TokenType.CLOSE_BLOCK, this.column);
       } else if (this.currentChar === "(") {
-        this.addToken(TokenType.LPAREN);
+        this.addToken(TokenType.LPAREN, this.column);
       } else if (this.currentChar === ")") {
-        this.addToken(TokenType.RPAREN);
+        this.addToken(TokenType.RPAREN, this.column);
       } else if (this.currentChar === "+") {
-        this.addToken(TokenType.INT_OP);
+        this.addToken(TokenType.INT_OP, this.column);
       } else if (this.currentChar === '"') {
         this.tokenizeString();
       } else if (/[a-z]/.test(this.currentChar)) {
@@ -80,20 +88,14 @@ export class Lexer {
         this.tokenizeNotEquals();
       } else if (this.currentChar === "$") {
         this.tokenizeEOP();
-        foundEOP = true;
-        this.outputTokens(); // remove and place somewhere else - causing too much trouble
-        reportWarningsandErrors(this);
-        this.programID++;
-        // ADD CHECKING FOR MORE PROGRAMS BEFORE OUPTTING THIS MESSAGE
-        logInfo(`Lexing Program ${this.programID}`);
+        this.foundEOP = true;
       } else {
         this.reportError(`Unrecognized character '${this.currentChar}'`); // add errors as you get them
         this.advance();
       }
     }
-    if (!foundEOP) {
+    if (!this.foundEOP) {
       this.reportWarning("Program is missing an EOP ($) at the end");
-      this.outputTokens();
       reportWarningsandErrors(this);
     }
     return this.tokens;
@@ -130,6 +132,9 @@ export class Lexer {
 
     const tokenType = keywords[identifier] || TokenType.IDENTIFIER;
     this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
+    logDebug(
+      `${tokenType} [${identifier}] found at (${this.line}:${startColumn})`
+    );
   }
 
   /* STRINGS - " "
@@ -141,9 +146,7 @@ export class Lexer {
 
     // Opening quote
     if (this.currentChar === '"') {
-      this.tokens.push(
-        new Token(TokenType.CHAR_LIST, this.currentChar, this.line, this.column)
-      );
+      this.addToken(TokenType.CHAR_LIST, startColumn);
       this.advance();
     } else {
       this.reportError(
@@ -156,9 +159,7 @@ export class Lexer {
     while (this.currentChar !== '"' && this.currentChar !== "\0") {
       if (/[a-z]/.test(this.currentChar)) {
         // Assuming only lowercase characters are valid
-        this.tokens.push(
-          new Token(TokenType.CHAR, this.currentChar, this.line, this.column)
-        );
+        this.addToken(TokenType.CHAR, this.column);
         this.advance();
       } else {
         this.reportError(`Invalid character ${this.currentChar} in string.`);
@@ -168,9 +169,7 @@ export class Lexer {
 
     // Closing quote
     if (this.currentChar === '"') {
-      this.tokens.push(
-        new Token(TokenType.CHAR_LIST, this.currentChar, this.line, this.column)
-      );
+      this.addToken(TokenType.CHAR_LIST, startColumn);
       this.advance();
     } else {
       this.reportError(
@@ -188,9 +187,15 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.BOOL_OP, "==", this.line, startColumn)
       );
+      logDebug(
+        `${TokenType.BOOL_OP} [==] found at (${this.line}: ${this.column})`
+      );
     } else {
       this.tokens.push(
         new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn)
+      );
+      logDebug(
+        `${TokenType.ASSIGN_OP} [=] found at (${this.line}: ${this.column})`
       );
     }
   }
@@ -219,14 +224,21 @@ export class Lexer {
     this.tokens.push(
       new Token(TokenType.DIGIT, number, this.line, startColumn)
     );
+    logDebug(
+      `${TokenType.DIGIT} [${number}] found at (${this.line}:${startColumn})`
+    );
   }
 
   private tokenizeEOP() {
-    this.tokens.push(
-      new Token(TokenType.EOP, this.currentChar, this.line, this.column)
-    );
+    this.addToken(TokenType.EOP, this.column);
+    reportWarningsandErrors(this);
+    this.programID++;
 
-    this.advance();
+    this.skipWhiteSpace();
+    if (!this.endOfFileReached && this.currentChar !== "\0") {
+      this.foundEOP = false;
+      logInfo(`Lexing Program ${this.programID}`);
+    }
   }
 
   private handleWhiteSpace(): void {
@@ -236,21 +248,18 @@ export class Lexer {
     }
     this.advance();
   }
+  private skipWhiteSpace(): void {
+    while (/\s/.test(this.currentChar)) {
+      this.advance();
+    }
+  }
   // for immediate reporting / storing for output at completion - move to gui.ts
   private reportError(message: string): void {
     logError(message, this.line, this.column);
     this.errors.push({ message, line: this.line, column: this.column });
   }
   private reportWarning(message: string): void {
+    logWarning(message, this.line, this.column);
     this.warnings.push({ message, line: this.line, column: this.column });
-  }
-
-  // OUTPUT VALID TOKENS
-  private outputTokens(): void {
-    this.tokens.forEach((token) => {
-      logDebug(
-        `${token.type} [${token.value}] found at (${token.line}: ${token.column})`
-      );
-    });
   }
 }

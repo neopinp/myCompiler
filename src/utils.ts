@@ -1,20 +1,32 @@
 export function logInfo(message: string): void {
-  console.log(`INFO: ${message}`);
-  logToScreen("INFO -> ", message);
+  logToScreen("INFO ->  ", message);
 }
 
 export function logDebug(message: string): void {
-  console.log(`DEBUG: ${message}`);
-  logToScreen("DEBUG -", message);
+  logToScreen("DEBUG -  ", message);
 }
 
 export function logError(message: string, line: number, column: number): void {
-  const formattedMessage = `(${line}:${column}): ${message}`;
-  console.error(`ERROR - (${line}:${column}): ${message}`);
-  logToScreen("ERROR -", formattedMessage);
+  const formattedMessage = `(${message}: ${line}:${column})`;
+  logToScreen("ERROR -  ", formattedMessage);
+  logToErrors("ERROR -  ", formattedMessage)
 }
 
+export function logWarning(message: string, line: number, column: number): void {
+  const formattedMessage = `(${message}: ${line}:${column})`;
+  logToScreen("WARNING -", formattedMessage);
+  logToErrors("WARNING -", formattedMessage)
+}
 
+// SEPARATE WARNINGS AND ERROR MESSAGES
+export function logToErrors(level: string, message: string): void {
+  const outputElement = document.getElementById("output2") as HTMLElement;
+  if (outputElement) {
+    outputElement.innerHTML += `${level} Lexer - ${message}\n`;
+  }
+}
+
+// PROGRAM OUTPUT
 export function logToScreen(level: string, message: string): void {
   const outputElement = document.getElementById("output") as HTMLElement;
   if (outputElement) {

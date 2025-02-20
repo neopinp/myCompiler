@@ -14,12 +14,18 @@
       placeholder="Enter your code here..."
     ></textarea>
     <button id="run-button">Run Compiler</button>
+    <textarea
+      id="output2"
+      rows="10"
+      cols="70"
+      placeholder="warnings and errors here..."
+    ></textarea>
 
     <h2>Output:</h2>
     <pre id="output"></pre>
 
     <script type="module">
-      import { runCompiler } from "./dist/gui.js"; 
+      import { runCompiler } from "./dist/gui.js";
       document.getElementById("run-button").addEventListener("click", () => {
         runCompiler();
       });
