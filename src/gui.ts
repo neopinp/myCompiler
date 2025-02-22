@@ -23,7 +23,7 @@ export function reportWarningsandErrors(lexer: Lexer): void {
   // RETURN WARNINGS FIRST
   if (lexer.warnings.length === 0 && lexer.errors.length === 0) {
     logInfo(
-      `End of Program ${lexer.programID} with ${lexer.errors.length} error(s) and ${lexer.warnings.length} warnings`
+      `End of Program ${lexer.programID} with ${lexer.errors.length} error(s) and ${lexer.warnings.length} warnings\n`
     );
   }
   if (lexer.warnings.length > 0 && lexer.errors.length === 0) {
@@ -31,7 +31,7 @@ export function reportWarningsandErrors(lexer: Lexer): void {
   }
   if (lexer.warnings.length >= 0 && lexer.errors.length > 0) {
     logInfo(
-      `Lex Failed with: ${lexer.errors.length} error(s) and ${lexer.warnings.length} warning(s)`
+      `Lex Failed with: ${lexer.errors.length} error(s) and ${lexer.warnings.length} warning(s)\n`
     );
   }
 }

@@ -16,13 +16,13 @@ export function runCompiler() {
 export function reportWarningsandErrors(lexer) {
     // RETURN WARNINGS FIRST
     if (lexer.warnings.length === 0 && lexer.errors.length === 0) {
-        logInfo(`End of Program ${lexer.programID} with ${lexer.errors.length} error(s) and ${lexer.warnings.length} warnings`);
+        logInfo(`End of Program ${lexer.programID} with ${lexer.errors.length} error(s) and ${lexer.warnings.length} warnings\n`);
     }
     if (lexer.warnings.length > 0 && lexer.errors.length === 0) {
         logInfo(`Lex Completed with: ${lexer.warnings.length} warning(s).`);
     }
     if (lexer.warnings.length >= 0 && lexer.errors.length > 0) {
-        logInfo(`Lex Failed with: ${lexer.errors.length} error(s) and ${lexer.warnings.length} warning(s)`);
+        logInfo(`Lex Failed with: ${lexer.errors.length} error(s) and ${lexer.warnings.length} warning(s)\n`);
     }
 }
 //# sourceMappingURL=gui.js.map

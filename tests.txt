@@ -61,6 +61,11 @@ DEBUG Lexer - CHAR [a] found at (1: 6)
 DEBUG Lexer - CHAR_LIST ["] found at (1: 7)
 INFO Lexer - Lex completed: 0 errors
 
+"a b c" - STRINGS WITH SPACES 
+------------------------------
+space is unrecognized character 
+
+
 
 
 Running Thoughts / Questions / Edge Cases to Test 

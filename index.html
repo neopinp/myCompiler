@@ -4,25 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>neosCompiler - TS</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>TypeScript Compiler</h1>
-    <textarea
-      id="sourceCode"
-      rows="10"
-      cols="50"
-      placeholder="Enter your code here..."
-    ></textarea>
-    <button id="run-button">Run Compiler</button>
-    <textarea
-      id="output2"
-      rows="10"
-      cols="70"
-      placeholder="warnings and errors here..."
-    ></textarea>
-
-    <h2>Output:</h2>
-    <pre id="output"></pre>
+    <div class="leftSide">
+      <!-- Source Code & Errors/Warnings -->
+      <textarea
+        id="sourceCode"
+        rows="10"
+        cols="80"
+        placeholder="enter your code here..."
+      ></textarea>
+      <textarea
+        id="output2"
+        rows="10"
+        cols="80"
+        placeholder="warnings and errors here..."
+      ></textarea>
+      <button id="run-button"><router-link>compile</router-link></button>
+    </div>
+    <div class="rightSide">
+      <!-- Program Output -->
+      <h2>Program Output</h2>
+      <pre id="output"></pre>
+    </div>
 
     <script type="module">
       import { runCompiler } from "./dist/gui.js";

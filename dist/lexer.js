@@ -45,7 +45,7 @@ export class Lexer {
     addToken(type, startColumn) {
         const newTokens = new Token(type, this.currentChar, this.line, startColumn);
         this.tokens.push(newTokens);
-        logDebug(`${newTokens.type} [${newTokens.value}] found at (${newTokens.line}: ${newTokens.column})`);
+        logDebug(`${newTokens.type} [${newTokens.value}] found at (${newTokens.line}:${newTokens.column})`);
         this.advance();
     }
     // Start token rules from most specific to least specific
@@ -95,7 +95,7 @@ export class Lexer {
                 this.tokenizeComment();
             }
             else {
-                this.reportError(`Unrecognized character '${this.currentChar}'`); // add errors as you get them
+                this.reportError(`Unrecognized character ProgramID: ${this.programID} ('${this.currentChar}')`); // add errors as you get them
                 this.advance();
             }
         }
@@ -213,6 +213,8 @@ export class Lexer {
             this.foundEOP = false;
             logInfo(`Lexing Program ${this.programID}`);
         }
+        this.errors = [];
+        this.warnings = [];
     }
     tokenizeComment() {
         let startColumn = this.column;
@@ -224,6 +226,7 @@ export class Lexer {
         while (this.currentChar !== "/" && this.currentChar !== "\0") {
             this.advance();
         }
+        // add error checking for missing closing of comments
         this.advance();
     }
     handleWhiteSpace() {
