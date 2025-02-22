@@ -140,8 +140,7 @@ export class Lexer {
         let startColumn = this.column; // Capture starting column of the quote
         // Opening quote
         if (this.currentChar === '"') {
-            this.addToken(TokenType.CHAR_LIST, startColumn);
-            this.advance();
+            this.addToken(TokenType.CHAR_LIST, this.column);
         }
         else {
             this.reportError(`Unterminated string literal starting at ${this.line}:${startColumn}`);
@@ -152,7 +151,6 @@ export class Lexer {
             if (/[a-z]/.test(this.currentChar)) {
                 // Assuming only lowercase characters are valid
                 this.addToken(TokenType.CHAR, this.column);
-                this.advance();
             }
             else {
                 this.reportError(`Invalid character ${this.currentChar} in string.`);
