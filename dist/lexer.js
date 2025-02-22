@@ -91,6 +91,9 @@ export class Lexer {
                 this.tokenizeEOP();
                 this.foundEOP = true;
             }
+            else if (this.currentChar === "/") {
+                this.tokenizeComment();
+            }
             else {
                 this.reportError(`Unrecognized character '${this.currentChar}'`); // add errors as you get them
                 this.advance();
@@ -153,7 +156,7 @@ export class Lexer {
                 this.addToken(TokenType.CHAR, this.column);
             }
             else {
-                this.reportError(`Invalid character ${this.currentChar} in string.`);
+                this.reportError(`Invalid character ${this.currentChar} in string`);
                 this.advance();
             }
         }
@@ -210,6 +213,18 @@ export class Lexer {
             this.foundEOP = false;
             logInfo(`Lexing Program ${this.programID}`);
         }
+    }
+    tokenizeComment() {
+        let startColumn = this.column;
+        this.advance();
+        if (this.currentChar !== "*") {
+            this.reportWarning(`Missing Opening '*' ${this.line}:${startColumn}`);
+        }
+        this.advance();
+        while (this.currentChar !== "/" && this.currentChar !== "\0") {
+            this.advance();
+        }
+        this.advance();
     }
     handleWhiteSpace() {
         if (this.currentChar === "\n") {
