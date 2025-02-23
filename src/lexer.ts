@@ -64,7 +64,7 @@ export class Lexer {
 
     while (this.currentChar !== "\0") {
       if (this.currentChar === "\t") {
-        this.reportError(`Unrecognized Token: Tab`);
+        this.reportError(`Unrecognized Token: Tab`)
         this.advance();
       } else if (/\s/.test(this.currentChar)) {
         this.handleWhiteSpace();
@@ -109,88 +109,25 @@ export class Lexer {
 
   // KEYWORDS & IDENTIFIERS
   private tokenizeIdentifier(): void {
-    let startColumn = this.column;
+    let startColumn = this.column; // start of identifier
     let identifier = "";
+    /* 
+    Start token searching at alpha char
+    If Identifier === keywords[identifier] type === keyword | identifier 
+    KEYWORDS === predefined words that cannot be used as variables
+    
+    EDIT: should use longest match + rule order 
+    */
 
     while (/[a-z]/.test(this.currentChar)) {
       identifier += this.currentChar;
+
+      // Check if identifier matches any keywords during looping ?
+      // 
       this.advance();
-
-      // Check if the accumulated identifier is a keyword
-      if (this.isKeyword(identifier)) {
-        // Push the keyword as a token
-        this.addToken(this.getKeywordToken(identifier), startColumn);
-
-        // If it's a type keyword (int, string, boolean), expect an identifier next
-        if (
-          identifier === "int" ||
-          identifier === "string" ||
-          identifier === "boolean"
-        ) {
-          this.skipWhiteSpace(); // Allow optional spaces
-
-          if (/[a-z]/.test(this.currentChar)) {
-            startColumn = this.column;
-            identifier = "";
-
-            while (/[a-z]/.test(this.currentChar)) {
-              identifier += this.currentChar;
-              this.advance();
-            }
-
-            this.tokens.push(
-              new Token(
-                TokenType.IDENTIFIER,
-                identifier,
-                this.line,
-                startColumn
-              )
-            );
-            logDebug(
-              `${TokenType.IDENTIFIER} [${identifier}] found at (${this.line}:${startColumn})`
-            );
-          } else {
-            this.reportError(
-              `Expected variable name after type '${identifier}'`
-            );
-          }
-        }
-
-        return; // Exit once a keyword is tokenized
-      }
     }
 
-    // If it's not a keyword, it's an identifier
-    if (identifier.length > 0) {
-      this.tokens.push(
-        new Token(TokenType.IDENTIFIER, identifier, this.line, startColumn)
-      );
-      logDebug(
-        `${TokenType.IDENTIFIER} [${identifier}] found at (${this.line}:${startColumn})`
-      );
-    }
-  }
-
-  /**
-   * Helper function to check if a word is a keyword.
-   */
-  private isKeyword(word: string): boolean {
-    return [
-      "print",
-      "while",
-      "if",
-      "int",
-      "string",
-      "boolean",
-      "true",
-      "false",
-    ].includes(word);
-  }
-
-  /**
-   * Helper function to get the token type for a keyword.
-   */
-  private getKeywordToken(word: string): TokenType {
+    // Determine keyword or identifier
     const keywords: Record<string, TokenType> = {
       print: TokenType.PRINT,
       while: TokenType.WHILE,
@@ -201,7 +138,12 @@ export class Lexer {
       true: TokenType.BOOLEAN_LITERAL,
       false: TokenType.BOOLEAN_LITERAL,
     };
-    return keywords[word] || TokenType.IDENTIFIER;
+
+    const tokenType = keywords[identifier] || TokenType.IDENTIFIER;
+    this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
+    logDebug(
+      `${tokenType} [${identifier}] found at (${this.line}:${startColumn})`
+    );
   }
 
   /* STRINGS - " "
