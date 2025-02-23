@@ -30,5 +30,6 @@ export enum TokenType {
   RPAREN = "R-PAREN",              // )
   EOP = "EOP",                    // $ - end of program
   COMMENT = "COMMENT",            
-  INVALID = "INVALID"             // unkown token 
+  INVALID = "INVALID",             // unkown token 
+  SPACE = "SPACE"
 }

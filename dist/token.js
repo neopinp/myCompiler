@@ -33,6 +33,7 @@ export var TokenType;
     TokenType["RPAREN"] = "R-PAREN";
     TokenType["EOP"] = "EOP";
     TokenType["COMMENT"] = "COMMENT";
-    TokenType["INVALID"] = "INVALID"; // unkown token 
+    TokenType["INVALID"] = "INVALID";
+    TokenType["SPACE"] = "SPACE";
 })(TokenType || (TokenType = {}));
 //# sourceMappingURL=token.js.map

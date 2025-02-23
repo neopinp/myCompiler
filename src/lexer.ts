@@ -93,7 +93,7 @@ export class Lexer {
         this.tokenizeComment();
       } else {
         this.reportError(
-          `Unrecognized character ProgramID: ${this.programID} ('${this.currentChar}')`
+          `Unrecognized character PID:${this.programID} ('${this.currentChar}')`
         ); // add errors as you get them
         this.advance();
       }
@@ -163,6 +163,8 @@ export class Lexer {
       if (/[a-z]/.test(this.currentChar)) {
         // Assuming only lowercase characters are valid
         this.addToken(TokenType.CHAR, this.column);
+      } else if (/\s/.test(this.currentChar)) {
+        this.addToken(TokenType.SPACE, this.column);
       } else {
         this.reportError(`Invalid character ${this.currentChar} in string`);
         this.advance();

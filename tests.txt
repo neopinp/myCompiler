@@ -62,6 +62,7 @@ DEBUG Lexer - CHAR_LIST ["] found at (1: 7)
 INFO Lexer - Lex completed: 0 errors
 
 "a b c" - STRINGS WITH SPACES 
+"str in g" - WORKING 
 ------------------------------
 space is unrecognized character 
 
