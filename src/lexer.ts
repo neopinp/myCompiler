@@ -216,6 +216,7 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.BOOL_OP, "!=", this.line, startColumn)
       );
+      logDebug(`${TokenType.BOOL_OP} [!=] found at (${this.line}: ${this.column})`)
     } else {
       this.reportError("Unrecognized token");
     }
