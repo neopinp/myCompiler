@@ -111,22 +111,9 @@ export class Lexer {
     }
     // KEYWORDS & IDENTIFIERS
     tokenizeIdentifier() {
-        let startColumn = this.column; // start of identifier
-        let identifier = "";
-        /*
-        Start token searching at alpha char
-        If Identifier === keywords[identifier] type === keyword | identifier
-        KEYWORDS === predefined words that cannot be used as variables
-        
-        EDIT: should use longest match + rule order
-        */
-        while (/[a-z]/.test(this.currentChar)) {
-            identifier += this.currentChar;
-            // Check if identifier matches any keywords during looping ?
-            // 
-            this.advance();
-        }
-        // Determine keyword or identifier
+        let startColumn = this.column;
+        let buffer = ""; // Accumulation buffer
+        // Define keyword mappings
         const keywords = {
             print: TokenType.PRINT,
             while: TokenType.WHILE,
@@ -137,9 +124,32 @@ export class Lexer {
             true: TokenType.BOOLEAN_LITERAL,
             false: TokenType.BOOLEAN_LITERAL,
         };
-        const tokenType = keywords[identifier] || TokenType.IDENTIFIER;
-        this.tokens.push(new Token(tokenType, identifier, this.line, startColumn));
-        logDebug(`${tokenType} [${identifier}] found at (${this.line}:${startColumn})`);
+        while (/[a-z]/.test(this.currentChar)) {
+            buffer += this.currentChar;
+            this.advance();
+            // accumulate a string until you reach a keyword
+            for (const key in keywords) {
+                let keywordIndex = buffer.indexOf(key);
+                if (keywordIndex !== -1) {
+                    // Tokenize everything before the keyword as single-character identifiers
+                    for (let i = 0; i < keywordIndex; i++) {
+                        this.tokens.push(new Token(TokenType.IDENTIFIER, buffer[i], this.line, startColumn + i));
+                        logDebug(`ID [${buffer[i]}] found at (${this.line}:${startColumn + i})`);
+                    }
+                    this.tokens.push(new Token(keywords[key], key, this.line, startColumn + keywordIndex));
+                    logDebug(`${keywords[key]} [${key}] found at (${this.line}:${startColumn + keywordIndex})`);
+                    // Reset buffer and start accumulating after the keyword
+                    buffer = buffer.substring(keywordIndex + key.length);
+                    startColumn += keywordIndex + key.length;
+                    break;
+                }
+            }
+        }
+        // If there are remaining characters after the last keyword, tokenize them as single-letter identifiers
+        for (let i = 0; i < buffer.length; i++) {
+            this.tokens.push(new Token(TokenType.IDENTIFIER, buffer[i], this.line, startColumn + i));
+            logDebug(`ID [${buffer[i]}] found at (${this.line}:${startColumn + i})`);
+        }
     }
     /* STRINGS - " "
     Capture all characters AND SPACES until you reach a closing quote
@@ -182,13 +192,13 @@ export class Lexer {
         let startColumn = this.column;
         this.advance();
         if (this.currentChar === "=") {
-            this.advance();
             this.tokens.push(new Token(TokenType.BOOL_OP, "==", this.line, startColumn));
             logDebug(`${TokenType.BOOL_OP} [==] found at (${this.line}: ${this.column})`);
+            this.advance();
         }
         else {
             this.tokens.push(new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn));
-            logDebug(`${TokenType.ASSIGN_OP} [=] found at (${this.line}: ${this.column})`);
+            logDebug(`${TokenType.ASSIGN_OP} [=] found at (${this.line}: ${startColumn})`);
         }
     }
     tokenizeNotEquals() {

@@ -10,7 +10,7 @@ export function logError(message, line, column) {
     logToErrors("ERROR -  ", formattedMessage);
 }
 export function logWarning(message, line, column) {
-    const formattedMessage = `(${message}: ${line}:${column})`;
+    const formattedMessage = `(${message}: (${line}:${column})`;
     logToScreen("WARNING -", formattedMessage);
     logToErrors("WARNING -", formattedMessage);
 }

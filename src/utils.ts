@@ -13,7 +13,7 @@ export function logError(message: string, line: number, column: number): void {
 }
 
 export function logWarning(message: string, line: number, column: number): void {
-  const formattedMessage = `(${message}: ${line}:${column})`;
+  const formattedMessage = `(${message}: (${line}:${column})`;
   logToScreen("WARNING -", formattedMessage);
   logToErrors("WARNING -", formattedMessage)
 }
