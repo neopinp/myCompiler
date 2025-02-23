@@ -54,7 +54,11 @@ export class Lexer {
         logInfo(`Lexing Program ${this.programID}`);
         this.foundEOP = false;
         while (this.currentChar !== "\0") {
-            if (/\s/.test(this.currentChar)) {
+            if (this.currentChar === "\t") {
+                this.reportError(`Unrecognized Token: Tab`);
+                this.advance();
+            }
+            else if (/\s/.test(this.currentChar)) {
                 this.handleWhiteSpace();
             }
             else if (this.currentChar === "{") {
@@ -88,8 +92,8 @@ export class Lexer {
                 this.tokenizeNotEquals();
             }
             else if (this.currentChar === "$") {
-                this.tokenizeEOP();
                 this.foundEOP = true;
+                this.tokenizeEOP();
             }
             else if (this.currentChar === "/") {
                 this.tokenizeComment();
@@ -146,7 +150,7 @@ export class Lexer {
             this.addToken(TokenType.CHAR_LIST, this.column);
         }
         else {
-            this.reportError(`Unterminated string literal starting at ${this.line}:${startColumn}`);
+            this.reportError(`Unterminated string literal starting at ${this.line}:${this.column}`);
             return;
         }
         // Process each character inside the string
@@ -166,7 +170,6 @@ export class Lexer {
         // Closing quote
         if (this.currentChar === '"') {
             this.addToken(TokenType.CHAR_LIST, startColumn);
-            this.advance();
         }
         else {
             this.reportError(`Missing closing quote for string starting at ${this.line}:${startColumn}`);
@@ -218,6 +221,8 @@ export class Lexer {
         }
         this.errors = [];
         this.warnings = [];
+        this.column = 0;
+        this.line = 0;
     }
     tokenizeComment() {
         let startColumn = this.column;
