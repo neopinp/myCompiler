@@ -1,7 +1,79 @@
-* ABC123DEF345 *
-DEBUG Lexer - IDENTIFIER [abc] found at (1: 0)
-DEBUG Lexer - DIGIT [1] found at (1: 4)
-DEBUG Lexer - DIGIT [2] found at (1: 5)
-DEBUG Lexer - DIGIT [3] found at (1: 6)
-DEBUG Lexer - IDENTIFIER [def] found at (1: 0)
-p: why is the second identifier found at column 0 again but digits successfully increment ?
+ABC123DEF345  - WORKING assuming only lowercase for identifiers 
+--------------------------------------------------
+ERROR -  Lexer - (1:2)
+ERROR -  Lexer - (1:3)
+ERROR -  Lexer - (1:4)
+ERROR -  Lexer - (1:8)
+ERROR -  Lexer - (1:9)
+ERROR -  Lexer - (1:10)
+INFO Lexer - Lexical analysis complete.
+DEBUG Lexer - DIGIT [123] found at (1: 5)
+DEBUG Lexer - DIGIT [345] found at (1: 11)
+INFO Lexer - Lex Failed with: 6 error(s)
+ERROR -  Lexer - (1:2)
+ERROR -  Lexer - (1:3)
+ERROR -  Lexer - (1:4)
+ERROR -  Lexer - (1:8)
+ERROR -  Lexer - (1:9)
+ERROR -  Lexer - (1:10)
+\--------------------------------------------------\
+
+
+TESTING INT_OP - WORKING
+x+5, x + 5, x = 5 + 3 
+---------------------------------------
+DEBUG Lexer - BOOL_OP [=] found at (1: 3)
+3: mistaken for BoolOp and not AssignOp - accidentally pushed token as boolop for both, just changed to TokenType.AssignOp - WORKING 
+------------------------------------------
+TESTING BOOL_OP - WORKING 
+if x == 5 {
+  print("Hello") 
+}
+\----------------------------------------------------------------------\
+ERRORS
+- differentiating identifiers from strings, need to search for quotes
+- IDENTIFIER [ello] need to include caps letters 
+- move past opening quote, otherwise it will be classiifed as an identifier 
+- () implement checking for parentheses 
+
+- should output char by char instead of string [hello] **** - WORKING 
+\------------------------------------------------------------------------\
+
+
+TESTING CHAR_LIST AND CHAR - WORKING 
+"pizza"
+---------------------------------------------------------------------
+Originally implemented to output as string['abc']
+Changed to output line by line 
+-----------------------------------------------------------------------
+"a b c" - STRINGS WITH SPACES 
+"str in g" - WORKING 
+\--------------------------------------------------------------------------\
+space is unrecognized character - fixed to output space token
+
+
+intaintba=0b= - * WORKING *
+--------------------------------
+Fixed tokenizeIdentifier to accumulate a string until finding a keyword, then tokenize everything before keyword as identifier 
+Start with new string after keyword is found  
+
+WARNING MESSAGE FOR $ FOLLOWING FIRST($)
+asd$as *WORKING*
+-------------------
+TABS *WORKING*
+{
+	string b = "this should not be even considered to be accurate"	
+}$
+\------------------------------------------------------------------\
+
+
+
+
+Running Thoughts / Questions / Edge Cases to Test 
+--------------------------------------------------
+What happens if the user forgets a closing "?
+What happens if the program contains ("Hello\nWorld")?
+
+missing closing block or parentheses
+
+

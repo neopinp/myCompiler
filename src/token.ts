@@ -17,19 +17,19 @@ export enum TokenType {
   PRINT = "PRINT",              
   WHILE = "WHILE",              
   IF = "IF",                    
-  INT_TYPE = "INT_TYPE",          // int
-  STRING_TYPE = "STRING_TYPE",    // string
-  BOOLEAN_TYPE = "BOOEAL_TYPE",   // boolean
+  VAR_TYPE = "VAR_TYPE",          // int
   BOOLEAN_LITERAL = "BOOLEAN_LITERAL", // true | false
-  IDENTIFIER = "IDENTIFIER",      // a-z 
+  IDENTIFIER = "ID",      // a-z 
   DIGIT = "DIGIT",                // 0-9
-  STRING = "STRING",              
+  CHAR_LIST = "CHAR_LIST",        // char(s) in quotes
+  CHAR = "CHAR",              
   ASSIGN_OP = "ASSIGN_OP",        // =
   INT_OP = "INT_OP",              // +
   BOOL_OP = "BOOL_OP",            // == | !=
-  LPAREN = "OPAREN",              // (
-  RPAREN = "CPAREN",              // )
+  LPAREN = "L-PAREN",              // (
+  RPAREN = "R-PAREN",              // )
   EOP = "EOP",                    // $ - end of program
   COMMENT = "COMMENT",            
-  INVALID = "INVALID"             // unkown token 
+  INVALID = "INVALID",             // unkown token 
+  SPACE = "SPACE"
 }

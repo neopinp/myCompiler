@@ -3,7 +3,7 @@
 **Course:** compilers (CMPT 432)  
 **Instuctor:** Alan G. Labousseur  
 **Langauge**: TypeScript  
-**Development Tools**: Node.js, TypeScript, ts-node, ESLint  
+**Development Tools**: TypeScript, ts-node, ESLint  
 
 --- 
 
@@ -27,6 +27,7 @@ npm install # (TypeScript, ts-node, nodemon, ESLint)
 node -v # Check Node.js version
 npm -v  # Check npm version 
 git --version # Check Git version 
+tsc --watch # Compile while editing 
 ```
 
 ---

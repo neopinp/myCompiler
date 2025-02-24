@@ -1,27 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>neosCompiler - TS</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <h1>TypeScript Compiler</h1>
-    <textarea
-      id="sourceCode"
-      rows="10"
-      cols="50"
-      placeholder="Enter your code here..."
-    ></textarea>
-    <button id="run-button">Run Compiler</button>
+    <div class="leftSide">
+      <div class="dropdown">
+        <button
+          class="btn btn-secondary dropdown-toggle"
+          type="button"
+          id="dropdownMenuButton"
+          data-bs-toggle="dropdown"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
+          Test Cases
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <button class="dropdown-item" data-value="case6">Every Token</button>
+          <button class="dropdown-item" data-value="case3">Tabs</button>
+          <button class="dropdown-item" data-value="case1">
+            Proj1 Test Cases
+          </button>
+          <button class="dropdown-item" data-value="case4">
+            Lex w/o Spaces
+          </button>
+          <button class="dropdown-item" data-value="case5">
+            Lex w/ Spaces
+          </button>
+          <button class="dropdown-item" data-value='"a b c"$"abc"$'>
+            String w/ & w/o Spaces
+          </button>
+          <button class="dropdown-item" data-value="case7">
+            Test Splitting
+          </button>
+          <button class="dropdown-item" data-value="intaintba=0b=$">
+            Keyword & Identifier
+          </button>
+          <button
+            class="dropdown-item"
+            data-value="aaintbccstringdeebooleanfgg$"
+          >
+            Keyword & Identifier II
+          </button>
+          <button class="dropdown-item" data-value="case9">
+            Errors & Warnings
+          </button>
+          <button class="dropdown-item" data-value="asd$as">EOP Warning</button>
 
-    <h2>Output:</h2>
-    <pre id="output"></pre>
+          <button class="dropdown-item" data-value="case8">
+            more more more
+          </button>
+        </div>
+      </div>
 
+      <!-- Source Code & Errors/Warnings -->
+      <textarea
+        id="sourceCode"
+        rows="10"
+        cols="80"
+        placeholder="enter your code here..."
+      ></textarea>
+      Warnings & Errors
+      <div id="output2" rows="10" cols="80"></div>
+      <button id="run-button">Compile</button>
+    </div>
+    <div class="rightSide">
+      <!-- Program Output -->
+      <h2>Program Output</h2>
+      <pre id="output"></pre>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
     <script type="module">
-      import { runCompiler } from "./dist/gui.js"; 
+      import { runCompiler } from "./dist/gui.js";
+
+      // Run compiler on button click
       document.getElementById("run-button").addEventListener("click", () => {
         runCompiler();
+      });
+
+      // Multi-Line Test Cases
+      const testCases = {
+        case1: `{}$
+{{{{{{}}}}}}$
+{{{{{{}}} /* comments are ignored */ }}}}$
+{ /* comments are still ignored */ int @}$
+{
+int a
+a = a
+string b
+a=b
+}$`,
+        case2: `if x == 5 {
+  print("Hello") 
+}$`,
+        case3: `{
+	string b = "this should not be even considered to be accurate"	
+}$`,
+        case4: `/*LongTestCase-
+EverythingExceptBooleanDeclaration*/{/*IntDeclaration*/intaintba=0b=0/*WhileLoop*/while(a!=3){print(a)while(b!=3){print(b)b=1+bif(b==2){/*PrintStatement*/print("there is no spoon"/*Thiswilldonothing*/)}}b=0a=1+a}}$`,
+        case5: `/*Long Test Case - Everything Except Boolean Declaration */
+{
+/* Int Declaration */
+int a
+int b
+a = 0
+b=0
+/* While Loop */
+while (a != 3) {
+print(a)
+while (b != 3) {
+print(b)
+b = 1 + b
+if (b == 2) {
+/* Print Statement */
+print("there is no spoon" /* This will do nothing */ )
+}
+}
+b = 0
+a = 1+a
+}
+}
+$
+
+      `,
+        case6: `{/* Comment!!!*/ ()
+print=whileif"teststring"
+intstringbooleanfalse
+true
+==!=+ a 0123456789}$`,
+        case7: `{}$/*$$$ This should be ignored */$$$"the$tringstillsplits"`,
+        case8: `{/*this caused my compiler to go into an infinite loop*/
+    {}
+    {int astringb}
+    {
+    print(a)print(2)print(0+1)print(false)print(true)print("test")print((a==b))print((a!="tes t"))
+    a = aa=bb=bb=1b=1+bb="te st"b=""b=falseb=true
+    while true{
+    if (5+a=="test"){
+    
+    }
+    }
+    
+    }
+    }$
+`,
+        case9: `{	}#"+1#"/*/`,
+      };
+
+      // Handle dropdown item selection
+      document.querySelectorAll(".dropdown-item").forEach((item) => {
+        item.addEventListener("click", function () {
+          let selectedValue = this.getAttribute("data-value");
+
+          // If the test case is Proj1, use predefined multiline data
+          if (selectedValue in testCases) {
+            document.getElementById("sourceCode").value =
+              testCases[selectedValue];
+          } else {
+            document.getElementById("sourceCode").value = selectedValue;
+          }
+        });
+      });
+      document.addEventListener("DOMContentLoaded", function () {
+        const sourceCode = document.getElementById("sourceCode");
+
+        sourceCode.addEventListener("input", function () {
+          this.style.height = "auto"; // Reset height to recalculate
+          this.style.height = Math.min(this.scrollHeight, 400) + "px"; // Expand but respect max-height
+        });
       });
     </script>
   </body>

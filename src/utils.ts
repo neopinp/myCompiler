@@ -1,20 +1,40 @@
+import { scrollToBottom } from "./gui";
+
 export function logInfo(message: string): void {
-  console.log(`INFO: ${message}`);
-  logToScreen("INFO", message);
+  logToScreen("INFO ->  ", message);
 }
 
 export function logDebug(message: string): void {
-  console.log(`DEBUG: ${message}`);
-  logToScreen("DEBUG", message);
+  logToScreen("DEBUG -  ", message);
 }
 
 export function logError(message: string, line: number, column: number): void {
-  const formattedMessage = `(${line}:${column})`;
-  console.error(`ERROR - (${line}:${column}): ${message}`);
-  logToScreen("ERROR - ", formattedMessage);
+  const formattedMessage = `${message} | (${line}:${column})`;
+  logToScreen("ERROR -  ", formattedMessage);
+  logToErrors("ERROR -  ", formattedMessage);
 }
 
-function logToScreen(level: string, message: string): void {
+export function logWarning(
+  message: string,
+  line: number,
+  column: number
+): void {
+  const formattedMessage = `${message} | (${line}:${column})`;
+  logToScreen("WARNING -", formattedMessage);
+  logToErrors("WARNING -", formattedMessage);
+}
+
+// SEPARATE WARNINGS AND ERROR MESSAGES
+export function logToErrors(level: string, message: string): void {
+  const outputElement = document.getElementById("output2") as HTMLElement;
+  if (outputElement) {
+    const colorClass = level.includes("ERROR") ? "error" : "warning";
+    outputElement.innerHTML += `<span class="${colorClass}">${level} Lexer - ${message}</span><br>`;
+  }
+}
+
+// PROGRAM OUTPUT
+export function logToScreen(level: string, message: string): void {
   const outputElement = document.getElementById("output") as HTMLElement;
   if (outputElement) {
     outputElement.innerHTML += `<span class="${level.toLowerCase()}">${level} Lexer - ${message}</span><br>`;
