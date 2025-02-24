@@ -77,7 +77,6 @@ textarea {
   overflow-y: auto; 
   overflow-x: hidden;
 }
-
 #sourceCode {
   height: 300px;
 }
@@ -108,4 +107,24 @@ textarea {
 
 
 
+/* Style the dropdown button */
+.btn.dropdown-toggle {
+  background-color: #6c757d; /* Default Bootstrap Secondary Color */
+  color: white;
+  border: none;
+  transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+/* Change color and add effect on hover */
+.btn.dropdown-toggle:hover {
+  background-color: #5a6268; /* Darker shade */
+  transform: scale(1.05); /* Slightly enlarge */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+/* When dropdown is open, keep hover effect */
+.show .btn.dropdown-toggle {
+  background-color: #545b62;
+  transform: scale(1.05);
+}
 
