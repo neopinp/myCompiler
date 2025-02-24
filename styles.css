@@ -3,6 +3,9 @@ html, body {
   padding: 0;
   height: 100vh; /* Full height */
   display: flex;
+  font-family: monospace;
+  font-size:large;
+
 }
 
 .leftSide, .rightSide {
@@ -41,7 +44,6 @@ html, body {
   line-height: 1.15;
   margin: 12px 0 0;
   outline: none;
-  overflow: hidden;
   padding: 0 25px;
   position: relative;
   text-align: center;
@@ -68,6 +70,7 @@ textarea {
   border-radius: 10px;
   resize: vertical;
   box-sizing: border-box;
+  font-family: monospace;
 }
 .dropdown-menu {
   max-height: 200px;
@@ -75,6 +78,33 @@ textarea {
   overflow-x: hidden;
 }
 
+#sourceCode {
+  height: 300px;
+}
+
+#output2 {
+  font-family: monospace;
+  white-space: pre-wrap;
+  background: #f8f9fa;
+  color: black;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+}
+
+.warning {
+  color: orange;
+}
+
+.info {
+  color: blue;
+}
+
+.debug {
+  color: gray;
+}
 
 
 

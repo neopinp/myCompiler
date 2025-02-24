@@ -27,7 +27,7 @@
           <button class="dropdown-item" data-value="case1">
             Proj1 Test Cases
           </button>
-          <button class="dropdown-item" data-value="int x = 5;">Int</button>
+          <button class="dropdown-item" data-value="int x = 5">Int</button>
           <button class="dropdown-item" data-value="case2">Int & String</button>
           <button class="dropdown-item" data-value='"a b c"$"abc"$'>
             String w/ & w/o Spaces
@@ -56,13 +56,12 @@
         cols="80"
         placeholder="enter your code here..."
       ></textarea>
-
-      <textarea
+      <div
         id="output2"
         rows="10"
         cols="80"
         placeholder="warnings and errors here..."
-      ></textarea>
+      ></div>
       <button id="run-button">Compile</button>
     </div>
     <div class="rightSide">
@@ -84,15 +83,15 @@
       // Multi-Line Test Cases
       const testCases = {
         case1: `{}$
-                  {{{{{{}}}}}}$
-                  {{{{{{}}} /* comments are ignored */ }}}}$
-                  { /* comments are still ignored */ int @}$
-                  {
-                    int a
-                    a = a
-                    string b
-                    a=b
-                  }$`,
+{{{{{{}}}}}}$
+{{{{{{}}} /* comments are ignored */ }}}}$
+{ /* comments are still ignored */ int @}$
+{
+  int a
+  a = a
+  string b
+  a=b
+}$`,
         case2: `if x == 5 {
               print("Hello")
             }`,
@@ -113,6 +112,14 @@
           } else {
             document.getElementById("sourceCode").value = selectedValue;
           }
+        });
+      });
+      document.addEventListener("DOMContentLoaded", function () {
+        const sourceCode = document.getElementById("sourceCode");
+
+        sourceCode.addEventListener("input", function () {
+          this.style.height = "auto"; // Reset height to recalculate
+          this.style.height = Math.min(this.scrollHeight, 400) + "px"; // Expand but respect max-height
         });
       });
     </script>

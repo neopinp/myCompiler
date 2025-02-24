@@ -7,22 +7,27 @@ export function logDebug(message: string): void {
 }
 
 export function logError(message: string, line: number, column: number): void {
-  const formattedMessage = `(${message}: ${line}:${column})`;
+  const formattedMessage = `(${message}: (${line}:${column})`;
   logToScreen("ERROR -  ", formattedMessage);
-  logToErrors("ERROR -  ", formattedMessage)
+  logToErrors("ERROR -  ", formattedMessage);
 }
 
-export function logWarning(message: string, line: number, column: number): void {
+export function logWarning(
+  message: string,
+  line: number,
+  column: number
+): void {
   const formattedMessage = `(${message}: (${line}:${column})`;
   logToScreen("WARNING -", formattedMessage);
-  logToErrors("WARNING -", formattedMessage)
+  logToErrors("WARNING -", formattedMessage);
 }
 
 // SEPARATE WARNINGS AND ERROR MESSAGES
 export function logToErrors(level: string, message: string): void {
   const outputElement = document.getElementById("output2") as HTMLElement;
   if (outputElement) {
-    outputElement.innerHTML += `${level} Lexer - ${message}\n`;
+    const colorClass = level.includes("ERROR") ? "error" : "warning";
+    outputElement.innerHTML += `<span class="${colorClass}">${level} Lexer - ${message}</span><br>`;
   }
 }
 
