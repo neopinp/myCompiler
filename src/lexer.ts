@@ -50,7 +50,7 @@ export class Lexer {
     const newTokens = new Token(type, this.currentChar, this.line, startColumn);
     this.tokens.push(newTokens);
     logDebug(
-      `${newTokens.type} [${newTokens.value}] found at (${newTokens.line}:${newTokens.column})`
+      `${newTokens.type} [${newTokens.value}] | (${newTokens.line}:${newTokens.column})`
     );
     this.advance();
   }
@@ -64,7 +64,7 @@ export class Lexer {
 
     while (this.currentChar !== "\0") {
       if (this.currentChar === "\t") {
-        this.reportError(`Unrecognized Token: Tab`);
+        this.reportError(`Unrecognized Token PID:${this.programID} [Tab]`);
         this.advance();
       } else if (/\s/.test(this.currentChar)) {
         this.handleWhiteSpace();
@@ -95,13 +95,13 @@ export class Lexer {
         this.tokenizeComment();
       } else {
         this.reportError(
-          `Unrecognized character PID:${this.programID} ('${this.currentChar}')`
+          `Unrecognized character PID:${this.programID} ['${this.currentChar}']`
         ); // add errors as you get them
         this.advance();
       }
     }
     if (!this.foundEOP) {
-      this.reportWarning("Program is missing an EOP ($) at the end");
+      this.reportWarning(`PID:${this.programID} is missing an EOP ($) at the end`);
       reportWarningsandErrors(this);
     }
     return this.tokens;
@@ -143,9 +143,7 @@ export class Lexer {
               )
             );
             logDebug(
-              `ID [${buffer[i]}] found at (${this.line}:${
-                startColumn + i
-              })`
+              `ID [${buffer[i]}] | (${this.line}:${startColumn + i})`
             );
           }
 
@@ -153,9 +151,9 @@ export class Lexer {
             new Token(keywords[key], key, this.line, startColumn + keywordIndex)
           );
           logDebug(
-            `${keywords[key]} [${key}] found at (${this.line}:${
+            `${keywords[key]} [${key}] | (${this.line}:${
               startColumn + keywordIndex
-            })`
+          })`
           );
 
           // Reset buffer and start accumulating after the keyword
@@ -171,9 +169,7 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.IDENTIFIER, buffer[i], this.line, startColumn + i)
       );
-      logDebug(
-        `ID [${buffer[i]}] found at (${this.line}:${startColumn + i})`
-      );
+      logDebug(`ID [${buffer[i]}] | (${this.line}:${startColumn + i})`);
     }
   }
 
@@ -189,7 +185,7 @@ export class Lexer {
       this.addToken(TokenType.CHAR_LIST, this.column);
     } else {
       this.reportError(
-        `Unterminated string literal starting at ${this.line}:${this.column}`
+        `Unterminated string literal PID:${this.programID} | ${this.line}:${this.column}`
       );
       return;
     }
@@ -202,7 +198,7 @@ export class Lexer {
       } else if (/\s/.test(this.currentChar)) {
         this.addToken(TokenType.SPACE, this.column);
       } else {
-        this.reportError(`Invalid character ${this.currentChar} in string`);
+        this.reportError(`Invalid character PID:${this.programID} [${this.currentChar}] in string`);
         this.advance();
       }
     }
@@ -212,7 +208,7 @@ export class Lexer {
       this.addToken(TokenType.CHAR_LIST, this.column);
     } else {
       this.reportError(
-        `Missing closing quote for string starting at ${this.line}:${startColumn}`
+        `Missing closing quote for string PID:${this.programID}`
       );
     }
   }
@@ -226,7 +222,7 @@ export class Lexer {
         new Token(TokenType.BOOL_OP, "==", this.line, startColumn)
       );
       logDebug(
-        `${TokenType.BOOL_OP} [==] found at (${this.line}: ${this.column})`
+        `${TokenType.BOOL_OP} [==] | (${this.line}: ${this.column})`
       );
       this.advance();
     } else {
@@ -234,7 +230,7 @@ export class Lexer {
         new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn)
       );
       logDebug(
-        `${TokenType.ASSIGN_OP} [=] found at (${this.line}: ${startColumn})`
+        `${TokenType.ASSIGN_OP} [=] | (${this.line}: ${startColumn})`
       );
     }
   }
@@ -248,10 +244,10 @@ export class Lexer {
         new Token(TokenType.BOOL_OP, "!=", this.line, startColumn)
       );
       logDebug(
-        `${TokenType.BOOL_OP} [!=] found at (${this.line}: ${this.column})`
+        `${TokenType.BOOL_OP} [!=] | (${this.line}: ${this.column})`
       );
     } else {
-      this.reportError("Unrecognized token");
+      this.reportError(`PID:${this.programID} Unrecognized token`);
     }
   }
 
@@ -267,7 +263,7 @@ export class Lexer {
       new Token(TokenType.DIGIT, number, this.line, startColumn)
     );
     logDebug(
-      `${TokenType.DIGIT} [${number}] found at (${this.line}:${startColumn})`
+      `${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`
     );
   }
 
@@ -289,18 +285,26 @@ export class Lexer {
 
   private tokenizeComment(): void {
     let startColumn = this.column;
+    let startLine = this.line;
     this.advance();
 
     if (this.currentChar !== "*") {
-      this.reportWarning(`Missing Opening '*' ${this.line}:${startColumn}`);
+      this.reportError(`Missing Opening [*]`);
+      return;
     }
     this.advance();
 
-    while (this.currentChar !== "/" && this.currentChar !== "\0") {
+    while (!this.endOfFileReached) {
+      if (this.currentChar === "*" && this.peek() === "/") {
+        this.advance();
+        this.advance();
+        return;
+      }
       this.advance();
     }
-    // add error checking for missing closing of comments
-    this.advance();
+    this.reportError(
+      `Unclosed Comment Starting at (${startLine}:${startColumn})`
+    );
   }
 
   private handleWhiteSpace(): void {
@@ -323,5 +327,11 @@ export class Lexer {
   private reportWarning(message: string): void {
     logWarning(message, this.line, this.column);
     this.warnings.push({ message, line: this.line, column: this.column });
+  }
+  private peek(offset: number = 1): string {
+    if (this.position + offset - 1 < this.source.length) {
+      return this.source[this.position + offset - 1];
+    }
+    return "\0"; 
   }
 }

@@ -45,7 +45,7 @@ export class Lexer {
     addToken(type, startColumn) {
         const newTokens = new Token(type, this.currentChar, this.line, startColumn);
         this.tokens.push(newTokens);
-        logDebug(`${newTokens.type} [${newTokens.value}] found at (${newTokens.line}:${newTokens.column})`);
+        logDebug(`${newTokens.type} [${newTokens.value}] | (${newTokens.line}:${newTokens.column})`);
         this.advance();
     }
     // Start token rules from most specific to least specific
@@ -55,7 +55,7 @@ export class Lexer {
         this.foundEOP = false;
         while (this.currentChar !== "\0") {
             if (this.currentChar === "\t") {
-                this.reportError(`Unrecognized Token: Tab`);
+                this.reportError(`Unrecognized Token PID:${this.programID} [Tab]`);
                 this.advance();
             }
             else if (/\s/.test(this.currentChar)) {
@@ -99,12 +99,12 @@ export class Lexer {
                 this.tokenizeComment();
             }
             else {
-                this.reportError(`Unrecognized character PID:${this.programID} ('${this.currentChar}')`); // add errors as you get them
+                this.reportError(`Unrecognized character PID:${this.programID} ['${this.currentChar}']`); // add errors as you get them
                 this.advance();
             }
         }
         if (!this.foundEOP) {
-            this.reportWarning("Program is missing an EOP ($) at the end");
+            this.reportWarning(`PID:${this.programID} is missing an EOP ($) at the end`);
             reportWarningsandErrors(this);
         }
         return this.tokens;
@@ -134,10 +134,10 @@ export class Lexer {
                     // Tokenize everything before the keyword as single-character identifiers
                     for (let i = 0; i < keywordIndex; i++) {
                         this.tokens.push(new Token(TokenType.IDENTIFIER, buffer[i], this.line, startColumn + i));
-                        logDebug(`ID [${buffer[i]}] found at (${this.line}:${startColumn + i})`);
+                        logDebug(`ID [${buffer[i]}] | (${this.line}:${startColumn + i})`);
                     }
                     this.tokens.push(new Token(keywords[key], key, this.line, startColumn + keywordIndex));
-                    logDebug(`${keywords[key]} [${key}] found at (${this.line}:${startColumn + keywordIndex})`);
+                    logDebug(`${keywords[key]} [${key}] | (${this.line}:${startColumn + keywordIndex})`);
                     // Reset buffer and start accumulating after the keyword
                     buffer = buffer.substring(keywordIndex + key.length);
                     startColumn += keywordIndex + key.length;
@@ -148,7 +148,7 @@ export class Lexer {
         // If there are remaining characters after the last keyword, tokenize them as single-letter identifiers
         for (let i = 0; i < buffer.length; i++) {
             this.tokens.push(new Token(TokenType.IDENTIFIER, buffer[i], this.line, startColumn + i));
-            logDebug(`ID [${buffer[i]}] found at (${this.line}:${startColumn + i})`);
+            logDebug(`ID [${buffer[i]}] | (${this.line}:${startColumn + i})`);
         }
     }
     /* STRINGS - " "
@@ -162,7 +162,7 @@ export class Lexer {
             this.addToken(TokenType.CHAR_LIST, this.column);
         }
         else {
-            this.reportError(`Unterminated string literal starting at ${this.line}:${this.column}`);
+            this.reportError(`Unterminated string literal PID:${this.programID} | ${this.line}:${this.column}`);
             return;
         }
         // Process each character inside the string
@@ -175,7 +175,7 @@ export class Lexer {
                 this.addToken(TokenType.SPACE, this.column);
             }
             else {
-                this.reportError(`Invalid character ${this.currentChar} in string`);
+                this.reportError(`Invalid character PID:${this.programID} [${this.currentChar}] in string`);
                 this.advance();
             }
         }
@@ -184,7 +184,7 @@ export class Lexer {
             this.addToken(TokenType.CHAR_LIST, this.column);
         }
         else {
-            this.reportError(`Missing closing quote for string starting at ${this.line}:${startColumn}`);
+            this.reportError(`Missing closing quote for string PID:${this.programID}`);
         }
     }
     // Longest Match First - Check if there is a following '=' for "=="
@@ -193,12 +193,12 @@ export class Lexer {
         this.advance();
         if (this.currentChar === "=") {
             this.tokens.push(new Token(TokenType.BOOL_OP, "==", this.line, startColumn));
-            logDebug(`${TokenType.BOOL_OP} [==] found at (${this.line}: ${this.column})`);
+            logDebug(`${TokenType.BOOL_OP} [==] | (${this.line}: ${this.column})`);
             this.advance();
         }
         else {
             this.tokens.push(new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn));
-            logDebug(`${TokenType.ASSIGN_OP} [=] found at (${this.line}: ${startColumn})`);
+            logDebug(`${TokenType.ASSIGN_OP} [=] | (${this.line}: ${startColumn})`);
         }
     }
     tokenizeNotEquals() {
@@ -207,10 +207,10 @@ export class Lexer {
         if (this.currentChar === "=") {
             this.advance();
             this.tokens.push(new Token(TokenType.BOOL_OP, "!=", this.line, startColumn));
-            logDebug(`${TokenType.BOOL_OP} [!=] found at (${this.line}: ${this.column})`);
+            logDebug(`${TokenType.BOOL_OP} [!=] | (${this.line}: ${this.column})`);
         }
         else {
-            this.reportError("Unrecognized token");
+            this.reportError(`PID:${this.programID} Unrecognized token`);
         }
     }
     tokenizeNumber() {
@@ -221,7 +221,7 @@ export class Lexer {
             this.advance();
         }
         this.tokens.push(new Token(TokenType.DIGIT, number, this.line, startColumn));
-        logDebug(`${TokenType.DIGIT} [${number}] found at (${this.line}:${startColumn})`);
+        logDebug(`${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`);
     }
     tokenizeEOP() {
         this.addToken(TokenType.EOP, this.column);
@@ -239,16 +239,22 @@ export class Lexer {
     }
     tokenizeComment() {
         let startColumn = this.column;
+        let startLine = this.line;
         this.advance();
         if (this.currentChar !== "*") {
-            this.reportWarning(`Missing Opening '*' ${this.line}:${startColumn}`);
+            this.reportError(`Missing Opening [*]`);
+            return;
         }
         this.advance();
-        while (this.currentChar !== "/" && this.currentChar !== "\0") {
+        while (!this.endOfFileReached) {
+            if (this.currentChar === "*" && this.peek() === "/") {
+                this.advance();
+                this.advance();
+                return;
+            }
             this.advance();
         }
-        // add error checking for missing closing of comments
-        this.advance();
+        this.reportError(`Unclosed Comment Starting at (${startLine}:${startColumn})`);
     }
     handleWhiteSpace() {
         if (this.currentChar === "\n") {
@@ -270,6 +276,12 @@ export class Lexer {
     reportWarning(message) {
         logWarning(message, this.line, this.column);
         this.warnings.push({ message, line: this.line, column: this.column });
+    }
+    peek(offset = 1) {
+        if (this.position + offset - 1 < this.source.length) {
+            return this.source[this.position + offset - 1];
+        }
+        return "\0";
     }
 }
 //# sourceMappingURL=lexer.js.map

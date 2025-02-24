@@ -1,16 +1,16 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100vh; /* Full height */
+  height: 100vh; 
   display: flex;
   font-family: monospace;
   font-size:large;
-
+  overflow: hidden;
 }
 
 .leftSide, .rightSide {
-  flex: 1;  /* Each takes equal space */
-  min-width: 50vw; /* Ensure both sections take at least 50% */
+  flex: 1;  
+  min-width: 50vw; 
   padding: 20px;
   box-sizing: border-box;
 }
@@ -19,7 +19,26 @@ html, body {
 .rightSide {
   background-color: #fff;
   border-left: 1px solid #ccc;
+  height: 100%
 }
+
+.rightSide #output {
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: none; 
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #f8f8f8;
+  white-space: pre-wrap;
+  font-family: monospace;
+}
+
+.rightSide #output::-webkit-scrollbar {
+  width: 10px; 
+  color: red
+}
+
+
 
 .leftSide {
   display: flex;
@@ -79,6 +98,7 @@ textarea {
 }
 #sourceCode {
   height: 300px;
+
 }
 
 #output2 {
@@ -106,10 +126,8 @@ textarea {
 }
 
 
-
-/* Style the dropdown button */
 .btn.dropdown-toggle {
-  background-color: #6c757d; /* Default Bootstrap Secondary Color */
+  background-color: #6c757d; 
   color: white;
   border: none;
   transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
@@ -127,4 +145,24 @@ textarea {
   background-color: #545b62;
   transform: scale(1.05);
 }
+
+#sourceCode {
+  width: 100%;
+  max-height: 50vh; /* Expands to max 50% of viewport height */
+  min-height: 150px; /* Minimum height to prevent it from being too small */
+  overflow-y: auto; /* Enables vertical scrolling */
+  resize: none; /* Prevents manual resizing */
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 14px;
+  font-family: monospace;
+  background-color: #f8f8f8;
+}
+
+/* Custom Small Scrollbar */
+#sourceCode::-webkit-scrollbar {
+  width: 2px;
+}
+
+
 

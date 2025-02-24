@@ -1,3 +1,5 @@
+import { scrollToBottom } from "./gui";
+
 export function logInfo(message: string): void {
   logToScreen("INFO ->  ", message);
 }
@@ -7,7 +9,7 @@ export function logDebug(message: string): void {
 }
 
 export function logError(message: string, line: number, column: number): void {
-  const formattedMessage = `(${message}: (${line}:${column})`;
+  const formattedMessage = `${message} | (${line}:${column})`;
   logToScreen("ERROR -  ", formattedMessage);
   logToErrors("ERROR -  ", formattedMessage);
 }
@@ -17,7 +19,7 @@ export function logWarning(
   line: number,
   column: number
 ): void {
-  const formattedMessage = `(${message}: (${line}:${column})`;
+  const formattedMessage = `${message} | (${line}:${column})`;
   logToScreen("WARNING -", formattedMessage);
   logToErrors("WARNING -", formattedMessage);
 }

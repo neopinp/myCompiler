@@ -35,3 +35,10 @@ export function reportWarningsandErrors(lexer: Lexer): void {
     );
   }
 }
+
+export function scrollToBottom() {
+  const outputElement = document.getElementById("output");
+  if (outputElement) {
+    outputElement.scrollTop = outputElement.scrollHeight;
+  }
+}
