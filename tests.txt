@@ -75,7 +75,13 @@ What happens if the user forgets a closing "?
 What happens if the program contains ("Hello\nWorld")?
 
 EDGE CASES:
-intaintba=0b=
+
+
+intaintba=0b= - * WORKING *
+--------------------------------
+Fixed tokenizeIdentifier to accumulate a string until finding a keyword, then tokenize everything before keyword as identifier 
+Start with new string after keyword is found  
+
 missing closing block or parentheses
 
 WARNING MESSAGE FOR $ FOLLOWING FIRST($)

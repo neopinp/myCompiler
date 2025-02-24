@@ -196,7 +196,7 @@ export class Lexer {
 
     // Process each character inside the string
     while (this.currentChar !== '"' && this.currentChar !== "\0") {
-      if (/[a-z]/.test(this.currentChar)) {
+      if (/[a-zA-Z]/.test(this.currentChar)) {
         // Assuming only lowercase characters are valid
         this.addToken(TokenType.CHAR, this.column);
       } else if (/\s/.test(this.currentChar)) {
@@ -209,7 +209,7 @@ export class Lexer {
 
     // Closing quote
     if (this.currentChar === '"') {
-      this.addToken(TokenType.CHAR_LIST, startColumn);
+      this.addToken(TokenType.CHAR_LIST, this.column);
     } else {
       this.reportError(
         `Missing closing quote for string starting at ${this.line}:${startColumn}`

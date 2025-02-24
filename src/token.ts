@@ -19,7 +19,7 @@ export enum TokenType {
   IF = "IF",                    
   VAR_TYPE = "VAR_TYPE",          // int
   BOOLEAN_LITERAL = "BOOLEAN_LITERAL", // true | false
-  IDENTIFIER = "IDENTIFIER",      // a-z 
+  IDENTIFIER = "ID",      // a-z 
   DIGIT = "DIGIT",                // 0-9
   CHAR_LIST = "CHAR_LIST",        // char(s) in quotes
   CHAR = "CHAR",              

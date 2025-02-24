@@ -22,7 +22,7 @@ export var TokenType;
     TokenType["IF"] = "IF";
     TokenType["VAR_TYPE"] = "VAR_TYPE";
     TokenType["BOOLEAN_LITERAL"] = "BOOLEAN_LITERAL";
-    TokenType["IDENTIFIER"] = "IDENTIFIER";
+    TokenType["IDENTIFIER"] = "ID";
     TokenType["DIGIT"] = "DIGIT";
     TokenType["CHAR_LIST"] = "CHAR_LIST";
     TokenType["CHAR"] = "CHAR";
