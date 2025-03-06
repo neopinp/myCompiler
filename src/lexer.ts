@@ -179,6 +179,7 @@ export class Lexer {
   */
   private tokenizeString(): void {
     let startColumn = this.column; // Capture starting column of the quote
+    let startline = this.line;
 
     // Opening quote
     if (this.currentChar === '"') {
@@ -192,7 +193,7 @@ export class Lexer {
 
     // Process each character inside the string
     while (this.currentChar !== '"' && this.currentChar !== "\0") {
-      if (/[a-zA-Z]/.test(this.currentChar)) {
+      if (/[a-z]/.test(this.currentChar)) {
         // Assuming only lowercase characters are valid
         this.addToken(TokenType.CHAR, this.column);
       } else if (/\s/.test(this.currentChar)) {
