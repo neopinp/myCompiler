@@ -15,7 +15,7 @@ This project is a **compiler written in TypeScript** for the CMPT432 Course
 
 ### **Development Environment Setup**
 Ensure you have installed: 
-- **[Node.js]** 
+- **BootStrap**
 - **Git** 
 - **A Code Editor** 
 
@@ -23,8 +23,7 @@ Ensure you have installed:
 
 #### **Run & Verify Installations** 
 ```sh 
-npm install # (TypeScript, ts-node, nodemon, ESLint)
-node -v # Check Node.js version
+npm install # (TypeScript, boostrap)
 npm -v  # Check npm version 
 git --version # Check Git version 
 tsc --watch # Compile while editing 

@@ -1,4 +1,3 @@
-import { scrollToBottom } from "./gui";
 
 export function logInfo(message: string): void {
   logToScreen("INFO ->  ", message);
