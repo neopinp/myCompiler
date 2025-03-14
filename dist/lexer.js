@@ -6,6 +6,7 @@ TESTING
 import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
 import { logInfo, logError, logDebug, logWarning } from "./utils.js";
+import { Parser } from "./parser.js";
 export class Lexer {
     source = "";
     programID = 1;
@@ -227,6 +228,7 @@ export class Lexer {
     tokenizeEOP() {
         this.addToken(TokenType.EOP, this.column);
         reportWarningsandErrors(this);
+        this.runParser(this.tokens, this.programID);
         this.programID++;
         this.skipWhiteSpace();
         if (!this.endOfFileReached && this.currentChar !== "\0") {
@@ -283,6 +285,17 @@ export class Lexer {
             return this.source[this.position + offset - 1];
         }
         return "\0";
+    }
+    runParser(tokens, programID) {
+        const parser = new Parser(tokens, programID);
+        const cst = parser.parse();
+        if (parser.errors.length > 0) {
+            logInfo(`Skipping CST display for Program ${programID} due to parser errors.`, "Parser");
+        }
+        else if (cst !== null) {
+            logInfo(`Displaying CST for Program ${programID}`, "Parser");
+            cst.display();
+        }
     }
 }
 //# sourceMappingURL=lexer.js.map

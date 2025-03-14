@@ -1,32 +1,32 @@
-export function logInfo(message) {
-    logToScreen("INFO ->  ", message);
+export function logInfo(message, source = "Lexer") {
+    logToScreen("INFO -> ", message, source);
 }
-export function logDebug(message) {
-    logToScreen("DEBUG -  ", message);
+export function logDebug(message, source = "Lexer") {
+    logToScreen("DEBUG - ", message, source);
 }
-export function logError(message, line, column) {
+export function logError(message, line, column, source = "Lexer") {
     const formattedMessage = `${message} | (${line}:${column})`;
-    logToScreen("ERROR -  ", formattedMessage);
-    logToErrors("ERROR -  ", formattedMessage);
+    logToScreen("ERROR - ", formattedMessage, source);
+    logToErrors("ERROR - ", formattedMessage, source);
 }
-export function logWarning(message, line, column) {
+export function logWarning(message, line, column, source = "Lexer") {
     const formattedMessage = `${message} | (${line}:${column})`;
-    logToScreen("WARNING -", formattedMessage);
-    logToErrors("WARNING -", formattedMessage);
+    logToScreen("WARNING -", formattedMessage, source);
+    logToErrors("WARNING -", formattedMessage, source);
 }
-// SEPARATE WARNINGS AND ERROR MESSAGES
-export function logToErrors(level, message) {
-    const outputElement = document.getElementById("output2");
-    if (outputElement) {
-        const colorClass = level.includes("ERROR") ? "error" : "warning";
-        outputElement.innerHTML += `<span class="${colorClass}">${level} Lexer - ${message}</span><br>`;
-    }
-}
-// PROGRAM OUTPUT
-export function logToScreen(level, message) {
+export function logToScreen(level, message, source = "Lexer") {
     const outputElement = document.getElementById("output");
     if (outputElement) {
-        outputElement.innerHTML += `<span class="${level.toLowerCase()}">${level} Lexer - ${message}</span><br>`;
+        const cssClass = `${level.trim().toLowerCase()} ${source.toLowerCase()}`;
+        outputElement.innerHTML += `<span class="${cssClass}">${level} ${source} - ${message}</span><br>`;
+    }
+}
+export function logToErrors(level, message, source = "Lexer") {
+    const outputElement = document.getElementById("output2");
+    if (outputElement) {
+        const baseClass = level.includes("ERROR") ? "error" : "warning";
+        const cssClass = `${baseClass} ${source.toLowerCase()}`;
+        outputElement.innerHTML += `<span class="${cssClass}">${level} ${source} - ${message}</span><br>`;
     }
 }
 //# sourceMappingURL=utils.js.map

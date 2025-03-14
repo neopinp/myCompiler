@@ -125,6 +125,10 @@ textarea {
   color: gray;
 }
 
+.parser {
+  color: green;
+}
+
 
 .btn.dropdown-toggle {
   background-color: #6c757d; 

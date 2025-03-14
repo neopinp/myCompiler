@@ -1,6 +1,7 @@
 // BROWSER UI INTERACTIONS
 import { Lexer } from "./lexer.js";
 import { logInfo } from "./utils.js";
+import { Parser } from "./parser.js";
 
 export function runCompiler(): void {
   const inputElement = document.getElementById(
@@ -16,6 +17,7 @@ export function runCompiler(): void {
 
   const lexer = new Lexer(sourceCode);
   lexer.tokenize();
+
 }
 
 //  OUTPUT WARNINGS AND ERRORS

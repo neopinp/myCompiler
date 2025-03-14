@@ -7,6 +7,7 @@ TESTING
 import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
 import { logInfo, logError, logDebug, logWarning } from "./utils.js";
+import { Parser } from "./parser.js";
 
 export class Lexer {
   private source: string = "";
@@ -101,7 +102,9 @@ export class Lexer {
       }
     }
     if (!this.foundEOP) {
-      this.reportWarning(`PID:${this.programID} is missing an EOP ($) at the end`);
+      this.reportWarning(
+        `PID:${this.programID} is missing an EOP ($) at the end`
+      );
       reportWarningsandErrors(this);
     }
     return this.tokens;
@@ -142,9 +145,7 @@ export class Lexer {
                 startColumn + i
               )
             );
-            logDebug(
-              `ID [${buffer[i]}] | (${this.line}:${startColumn + i})`
-            );
+            logDebug(`ID [${buffer[i]}] | (${this.line}:${startColumn + i})`);
           }
 
           this.tokens.push(
@@ -153,7 +154,7 @@ export class Lexer {
           logDebug(
             `${keywords[key]} [${key}] | (${this.line}:${
               startColumn + keywordIndex
-          })`
+            })`
           );
 
           // Reset buffer and start accumulating after the keyword
@@ -199,7 +200,9 @@ export class Lexer {
       } else if (/\s/.test(this.currentChar)) {
         this.addToken(TokenType.SPACE, this.column);
       } else {
-        this.reportError(`Invalid character PID:${this.programID} [${this.currentChar}] in string`);
+        this.reportError(
+          `Invalid character PID:${this.programID} [${this.currentChar}] in string`
+        );
         this.advance();
       }
     }
@@ -222,17 +225,13 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.BOOL_OP, "==", this.line, startColumn)
       );
-      logDebug(
-        `${TokenType.BOOL_OP} [==] | (${this.line}: ${this.column})`
-      );
+      logDebug(`${TokenType.BOOL_OP} [==] | (${this.line}: ${this.column})`);
       this.advance();
     } else {
       this.tokens.push(
         new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn)
       );
-      logDebug(
-        `${TokenType.ASSIGN_OP} [=] | (${this.line}: ${startColumn})`
-      );
+      logDebug(`${TokenType.ASSIGN_OP} [=] | (${this.line}: ${startColumn})`);
     }
   }
 
@@ -244,9 +243,7 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.BOOL_OP, "!=", this.line, startColumn)
       );
-      logDebug(
-        `${TokenType.BOOL_OP} [!=] | (${this.line}: ${this.column})`
-      );
+      logDebug(`${TokenType.BOOL_OP} [!=] | (${this.line}: ${this.column})`);
     } else {
       this.reportError(`PID:${this.programID} Unrecognized token`);
     }
@@ -263,16 +260,14 @@ export class Lexer {
     this.tokens.push(
       new Token(TokenType.DIGIT, number, this.line, startColumn)
     );
-    logDebug(
-      `${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`
-    );
+    logDebug(`${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`);
   }
 
   private tokenizeEOP() {
     this.addToken(TokenType.EOP, this.column);
     reportWarningsandErrors(this);
+    this.runParser(this.tokens, this.programID);
     this.programID++;
-
     this.skipWhiteSpace();
     if (!this.endOfFileReached && this.currentChar !== "\0") {
       this.foundEOP = false;
@@ -333,6 +328,21 @@ export class Lexer {
     if (this.position + offset - 1 < this.source.length) {
       return this.source[this.position + offset - 1];
     }
-    return "\0"; 
+    return "\0";
+  }
+
+  private runParser(tokens: Token[], programID: number): void {
+    const parser = new Parser(tokens, programID);
+    const cst = parser.parse();
+
+    if (parser.errors.length > 0) {
+      logInfo(
+        `Skipping CST display for Program ${programID} due to parser errors.`,
+        "Parser"
+      );
+    } else if (cst !== null) {
+      logInfo(`Displaying CST for Program ${programID}`, "Parser");
+      cst.display();
+    }
   }
 }
