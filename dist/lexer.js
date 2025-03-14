@@ -272,12 +272,12 @@ export class Lexer {
         }
     }
     // for immediate reporting / storing for output at completion - move to gui.ts
-    reportError(message) {
-        logError(message, this.line, this.column);
+    reportError(message, source = "Lexer") {
+        logError(message, this.line, this.column, source);
         this.errors.push({ message, line: this.line, column: this.column });
     }
-    reportWarning(message) {
-        logWarning(message, this.line, this.column);
+    reportWarning(message, source = "Lexer") {
+        logWarning(message, this.line, this.column, source);
         this.warnings.push({ message, line: this.line, column: this.column });
     }
     peek(offset = 1) {
@@ -288,14 +288,7 @@ export class Lexer {
     }
     runParser(tokens, programID) {
         const parser = new Parser(tokens, programID);
-        const cst = parser.parse();
-        if (parser.errors.length > 0) {
-            logInfo(`Skipping CST display for Program ${programID} due to parser errors.`, "Parser");
-        }
-        else if (cst !== null) {
-            logInfo(`Displaying CST for Program ${programID}`, "Parser");
-            cst.display();
-        }
+        parser.parse();
     }
 }
 //# sourceMappingURL=lexer.js.map

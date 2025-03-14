@@ -1,7 +1,6 @@
 // BROWSER UI INTERACTIONS
 import { Lexer } from "./lexer.js";
 import { logInfo } from "./utils.js";
-import { Parser } from "./parser.js";
 
 export function runCompiler(): void {
   const inputElement = document.getElementById(
@@ -38,9 +37,3 @@ export function reportWarningsandErrors(lexer: Lexer): void {
   }
 }
 
-export function scrollToBottom() {
-  const outputElement = document.getElementById("output");
-  if (outputElement) {
-    outputElement.scrollTop = outputElement.scrollHeight;
-  }
-}

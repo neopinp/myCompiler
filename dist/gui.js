@@ -25,10 +25,4 @@ export function reportWarningsandErrors(lexer) {
         logInfo(`Lex Failed with: ${lexer.errors.length} error(s) and ${lexer.warnings.length} warning(s)\n`);
     }
 }
-export function scrollToBottom() {
-    const outputElement = document.getElementById("output");
-    if (outputElement) {
-        outputElement.scrollTop = outputElement.scrollHeight;
-    }
-}
 //# sourceMappingURL=gui.js.map

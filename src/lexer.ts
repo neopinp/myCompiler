@@ -316,12 +316,12 @@ export class Lexer {
     }
   }
   // for immediate reporting / storing for output at completion - move to gui.ts
-  private reportError(message: string): void {
-    logError(message, this.line, this.column);
+  public reportError(message: string, source: string = "Lexer"): void {
+    logError(message, this.line, this.column, source);
     this.errors.push({ message, line: this.line, column: this.column });
   }
-  private reportWarning(message: string): void {
-    logWarning(message, this.line, this.column);
+  public reportWarning(message: string, source: string = "Lexer"): void {
+    logWarning(message, this.line, this.column, source);
     this.warnings.push({ message, line: this.line, column: this.column });
   }
   private peek(offset: number = 1): string {
@@ -333,16 +333,8 @@ export class Lexer {
 
   private runParser(tokens: Token[], programID: number): void {
     const parser = new Parser(tokens, programID);
-    const cst = parser.parse();
+    parser.parse();
 
-    if (parser.errors.length > 0) {
-      logInfo(
-        `Skipping CST display for Program ${programID} due to parser errors.`,
-        "Parser"
-      );
-    } else if (cst !== null) {
-      logInfo(`Displaying CST for Program ${programID}`, "Parser");
-      cst.display();
-    }
+
   }
 }
