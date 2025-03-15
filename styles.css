@@ -26,10 +26,11 @@ html, body {
   width: 100%;
   max-height: 92vh;
   overflow-y: none; 
+  overflow-x: auto;
   border: 1px solid #ccc;
   padding: 10px;
   background-color: #f8f8f8;
-  white-space: pre-wrap;
+  white-space: wrap;
   font-family: monospace;
 }
 

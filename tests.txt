@@ -94,4 +94,8 @@ Make sure programs following the first do not display a CST tree if contiains er
 
 
 {intaa=1}$ {intaa=1#}$ {intaa=1}$
-{inta}${int}$
+{inta}${int}$ pass, parse fail
+{ int a = 1 @ } $ Lex Failed
+
+{ int a = 1 } $ pass
+{ int = 1 } $ fail

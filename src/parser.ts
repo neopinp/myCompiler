@@ -203,11 +203,18 @@ export class Parser {
   private parseCharList(): void {
     this.cst.startNonLeafNode("CharList");
 
-    if (this.currentToken.type === "CHAR") {
-      this.cst.startNonLeafNode("Char");
-      this.match("CHAR");
-      this.cst.endNonLeafNode();
+    if (this.currentToken.type === "CHAR" || this.currentToken.type === "SPACE") {
+      const tokenType = this.currentToken.type;
 
+      this.cst.startNonLeafNode(tokenType === "CHAR" ? "CHAR": "SPACE");
+
+      if (tokenType === "CHAR") {
+        this.match("CHAR")
+      } else {
+        this.match("SPACE")
+      }
+
+      this.cst.endNonLeafNode();
       this.parseCharList();
     }
 
@@ -237,8 +244,28 @@ export class Parser {
     this.cst.endNonLeafNode();
   }
 
-  private parseIfStatement(): void {}
-  private parseWhileStatement(): void {}
+  private parseIfStatement(): void {
+    this.cst.startNonLeafNode("IF");
+    logInfo(`parseIfStatement()`, "Parser")
+     if (this.match("IF")) {
+      this.parseBooleanExpr();
+      this.parseBlock();
+     } else {
+      this.reportError(`Expected [IF] Keyword at start of IfStatement`, "Parser")
+     }
+     this.cst.endNonLeafNode();
+
+  }
+  private parseWhileStatement(): void {
+    this.cst.startNonLeafNode("WHILE")
+    if (this.match("WHILE")) {
+      this.parseBooleanExpr();
+      this.parseBlock();
+    } else {
+      this.reportError(`Expected [WHILE] Keyword at start of WhileStatement`, "Parser")
+    }
+    this.cst.endNonLeafNode();
+  }
 
   private parseAssignmentStatement(): void {
     this.cst.startNonLeafNode("AssignmentStatement");
