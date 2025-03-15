@@ -73,7 +73,6 @@ export class Parser {
     this.parseBlock();
 
     this.match("EOP"); // edit
-
   }
   private parseBlock(): void {
     logInfo(`parseBlock()`, "Parser");
@@ -89,9 +88,17 @@ export class Parser {
   }
 
   private isStatement(token: Token): boolean {
-    const typesOfStatements = ["PRINT", "ID", "TYPE", "WHILE", "IF", "L-PAREN"];
+    const typesOfStatements = [
+      "PRINT",
+      "ID",
+      "VAR_TYPE",
+      "WHILE",
+      "IF",
+      "L-PAREN",
+    ];
     return typesOfStatements.includes(token.type);
   }
+
   private parseStatementList(): void {
     logInfo(`parseStatementList()`, "Parser");
     this.cst.startNonLeafNode("StatementList");
@@ -99,9 +106,10 @@ export class Parser {
     if (this.isStatement(this.currentToken)) {
       this.parseStatement();
       this.parseStatementList();
-    } 
+    }
     this.cst.endNonLeafNode();
   }
+
   private parseStatement(): void {
     logInfo(`parseStatement()`, "Parser");
 
@@ -114,9 +122,9 @@ export class Parser {
     } else if (tokenType === "WHILE") {
       this.parseWhileStatement();
     } else if (tokenType === "ID") {
-      this.parseAssignmentStatement();
+      this.parseAssignmentStatement(); // start with ID 
     } else if (tokenType === "VAR_TYPE") {
-      this.parseVarDecl();
+      this.parseVarDecl(); // start with VAR_TYPE
     } else if (tokenType === "L-BRACE") {
       this.parseBlock();
     } else {
@@ -183,7 +191,7 @@ export class Parser {
   }
   private parseStringExpr(): void {
     this.cst.startNonLeafNode("StringExpr");
-    logInfo("parseStringExpr()", "Parser")
+    logInfo("parseStringExpr()", "Parser");
 
     if (this.match("CHAR_LIST")) {
       this.parseCharList();
@@ -233,8 +241,46 @@ export class Parser {
 
   private parseIfStatement(): void {}
   private parseWhileStatement(): void {}
-  private parseAssignmentStatement(): void {}
-  private parseVarDecl(): void {}
+
+  private parseAssignmentStatement(): void {
+    this.cst.startNonLeafNode("AssignmentStatement");
+    logInfo(`parseAssignmentStatement()`, "Parser");
+
+    if (this.match("ID")) {
+      if (this.match("ASSIGN_OP")) {
+        this.parseExpr();
+      } else {
+        this.reportError(
+          "Expected ASSIGN (=) after ID in AssignmentStatement",
+          "Parser"
+        );
+      }
+    } else {
+      this.reportError("Expected ID at start of AssignmentStatement", "Parser");
+    }
+
+    this.cst.endNonLeafNode();
+  }
+
+  private parseVarDecl(): void {
+    this.cst.startNonLeafNode("VarDecl");
+    logInfo(`parseVarDecl()`, "Parser");
+
+    if (this.match("VAR_TYPE")) {
+      if (this.match("ID")) {
+        if (this.currentToken.type === "ASSIGN_OP") {
+          this.match("ASSIGN_OP");
+          this.parseExpr();
+        }
+      } else {
+        this.reportError("Expected identifier after VAR_TYPE", "Parser");
+      }
+    } else {
+      this.reportError("Expected VAR_TYPE at start of VarDecl", "Parser");
+    }
+
+    this.cst.endNonLeafNode();
+  }
 
   public reportError(message: string, source: string = "Lexer"): void {
     logError(message, 0, 0, source);
