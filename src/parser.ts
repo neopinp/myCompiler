@@ -46,24 +46,22 @@ export class Parser {
 
     if (this.currentIndex < this.tokens.length) {
       this.currentToken = this.tokens[this.currentIndex];
-    } else {
-      logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
-    }
+    } 
   }
 
   public parse(): CST | null {
     logInfo(`Parsing Program ${this.programID}`, "Parser");
     logInfo(`parse()`, "Parser");
+    
+
     this.parseProgram();
+    logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
     if (this.errors.length === 0) {
       logInfo(`Displaying CST for Program ${this.programID}`, "Parser");
       this.cst.display();
       return this.cst;
     } else {
-      logInfo(
-        `PARSER: Parse failed with ${this.errors.length} errors`,
-        "Parser"
-      );
+      logInfo(`CST Terminated`, "Parser")
       return null;
     }
   }

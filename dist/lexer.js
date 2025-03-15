@@ -228,8 +228,10 @@ export class Lexer {
     tokenizeEOP() {
         this.addToken(TokenType.EOP, this.column);
         reportWarningsandErrors(this);
-        this.runParser(this.tokens, this.programID);
-        this.programID++;
+        if (this.errors.length === 0) {
+            this.runParser(this.tokens, this.programID);
+            this.programID++;
+        }
         this.skipWhiteSpace();
         if (!this.endOfFileReached && this.currentChar !== "\0") {
             this.foundEOP = false;
@@ -237,6 +239,7 @@ export class Lexer {
         }
         this.errors = [];
         this.warnings = [];
+        this.tokens = [];
         this.column = 0;
         this.line = 0;
     }
@@ -289,6 +292,9 @@ export class Lexer {
     runParser(tokens, programID) {
         const parser = new Parser(tokens, programID);
         parser.parse();
+    }
+    getTokens() {
+        return this.tokens; // Returns all tokens after lexing is finished
     }
 }
 //# sourceMappingURL=lexer.js.map
