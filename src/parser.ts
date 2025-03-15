@@ -61,7 +61,7 @@ export class Parser {
       this.cst.display();
       return this.cst;
     } else {
-      logInfo(`CST Terminated`, "Parser")
+      logInfo(`CST Terminated\n`, "Parser")
       return null;
     }
   }
