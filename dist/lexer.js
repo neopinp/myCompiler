@@ -63,10 +63,10 @@ export class Lexer {
                 this.handleWhiteSpace();
             }
             else if (this.currentChar === "{") {
-                this.addToken(TokenType.OPEN_BLOCK, this.column);
+                this.addToken(TokenType.LBRACE, this.column);
             }
             else if (this.currentChar === "}") {
-                this.addToken(TokenType.CLOSE_BLOCK, this.column);
+                this.addToken(TokenType.RBRACE, this.column);
             }
             else if (this.currentChar === "(") {
                 this.addToken(TokenType.LPAREN, this.column);

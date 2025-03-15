@@ -37,11 +37,24 @@ export function logToScreen(
   source: string = "Lexer"
 ): void {
   const outputElement = document.getElementById("output") as HTMLElement;
+
   if (outputElement) {
-    const cssClass = `${level.trim().toLowerCase()} ${source.toLowerCase()}`;
+    let cssClass = "";
+
+    if (level.includes("DEBUG")) {
+      cssClass = "debug"; // Always gray for debug
+    } else if (level.includes("INFO")) {
+      cssClass = `info ${source.toLowerCase()}`; // Color depends on source (Lexer, Parser)
+    } else if (level.includes("ERROR")) {
+      cssClass = "error"; // Optional redundancy, already handled elsewhere
+    } else if (level.includes("WARNING")) {
+      cssClass = "warning"; // Optional redundancy
+    }
+
     outputElement.innerHTML += `<span class="${cssClass}">${level} ${source} - ${message}</span><br>`;
   }
 }
+
 
 export function logToErrors(
   level: string,

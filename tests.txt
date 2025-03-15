@@ -77,3 +77,10 @@ What happens if the program contains ("Hello\nWorld")?
 missing closing block or parentheses
 
 
+PARSER TESTS
+
+{}$
+
+
+
+{ print("abc") } $

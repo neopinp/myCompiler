@@ -117,16 +117,20 @@ textarea {
   color: orange;
 }
 
-.info {
+.info.parser {
+  color: green;
+  font-weight: bold;
+
+}
+
+.info.lexer {
   color: blue;
+  font-weight: bold;
+
 }
 
 .debug {
   color: gray;
-}
-
-.parser {
-  color: green;
 }
 
 
@@ -167,6 +171,25 @@ textarea {
 #sourceCode::-webkit-scrollbar {
   width: 2px;
 }
+
+#CST {
+  height: 300px;
+  width: 500px;
+  overflow: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-family: monospace;
+}
+
+#CST ul {
+  list-style-type: none;
+  padding-left: 20px;
+}
+
+#CST li {
+  margin: 2px 0;
+}
+
 
 
 
