@@ -6,6 +6,7 @@ TESTING
 import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
 import { logInfo, logError, logDebug, logWarning } from "./utils.js";
+import { Parser } from "./parser.js";
 export class Lexer {
     source = "";
     programID = 1;
@@ -62,10 +63,10 @@ export class Lexer {
                 this.handleWhiteSpace();
             }
             else if (this.currentChar === "{") {
-                this.addToken(TokenType.OPEN_BLOCK, this.column);
+                this.addToken(TokenType.LBRACE, this.column);
             }
             else if (this.currentChar === "}") {
-                this.addToken(TokenType.CLOSE_BLOCK, this.column);
+                this.addToken(TokenType.RBRACE, this.column);
             }
             else if (this.currentChar === "(") {
                 this.addToken(TokenType.LPAREN, this.column);
@@ -227,7 +228,10 @@ export class Lexer {
     tokenizeEOP() {
         this.addToken(TokenType.EOP, this.column);
         reportWarningsandErrors(this);
-        this.programID++;
+        if (this.errors.length === 0) {
+            this.runParser(this.tokens, this.programID);
+            this.programID++;
+        }
         this.skipWhiteSpace();
         if (!this.endOfFileReached && this.currentChar !== "\0") {
             this.foundEOP = false;
@@ -235,6 +239,7 @@ export class Lexer {
         }
         this.errors = [];
         this.warnings = [];
+        this.tokens = [];
         this.column = 0;
         this.line = 0;
     }
@@ -270,12 +275,12 @@ export class Lexer {
         }
     }
     // for immediate reporting / storing for output at completion - move to gui.ts
-    reportError(message) {
-        logError(message, this.line, this.column);
+    reportError(message, source = "Lexer") {
+        logError(message, this.line, this.column, source);
         this.errors.push({ message, line: this.line, column: this.column });
     }
-    reportWarning(message) {
-        logWarning(message, this.line, this.column);
+    reportWarning(message, source = "Lexer") {
+        logWarning(message, this.line, this.column, source);
         this.warnings.push({ message, line: this.line, column: this.column });
     }
     peek(offset = 1) {
@@ -283,6 +288,13 @@ export class Lexer {
             return this.source[this.position + offset - 1];
         }
         return "\0";
+    }
+    runParser(tokens, programID) {
+        const parser = new Parser(tokens, programID);
+        parser.parse();
+    }
+    getTokens() {
+        return this.tokens; // Returns all tokens after lexing is finished
     }
 }
 //# sourceMappingURL=lexer.js.map

@@ -12,8 +12,8 @@ export class Token {
 }
 
 export enum TokenType {
-  OPEN_BLOCK = "OPEN_BLOCK",       // {
-  CLOSE_BLOCK = "CLOSE_BLOCK",    // }
+  LBRACE = "L-BRACE",       // {
+  RBRACE = "R-BRACE",    // }
   PRINT = "PRINT",              
   WHILE = "WHILE",              
   IF = "IF",                    

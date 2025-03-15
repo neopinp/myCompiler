@@ -7,6 +7,7 @@ TESTING
 import { reportWarningsandErrors } from "./gui.js";
 import { Token, TokenType } from "./token.js";
 import { logInfo, logError, logDebug, logWarning } from "./utils.js";
+import { Parser } from "./parser.js";
 
 export class Lexer {
   private source: string = "";
@@ -69,9 +70,9 @@ export class Lexer {
       } else if (/\s/.test(this.currentChar)) {
         this.handleWhiteSpace();
       } else if (this.currentChar === "{") {
-        this.addToken(TokenType.OPEN_BLOCK, this.column);
+        this.addToken(TokenType.LBRACE, this.column);
       } else if (this.currentChar === "}") {
-        this.addToken(TokenType.CLOSE_BLOCK, this.column);
+        this.addToken(TokenType.RBRACE, this.column);
       } else if (this.currentChar === "(") {
         this.addToken(TokenType.LPAREN, this.column);
       } else if (this.currentChar === ")") {
@@ -101,7 +102,9 @@ export class Lexer {
       }
     }
     if (!this.foundEOP) {
-      this.reportWarning(`PID:${this.programID} is missing an EOP ($) at the end`);
+      this.reportWarning(
+        `PID:${this.programID} is missing an EOP ($) at the end`
+      );
       reportWarningsandErrors(this);
     }
     return this.tokens;
@@ -142,9 +145,7 @@ export class Lexer {
                 startColumn + i
               )
             );
-            logDebug(
-              `ID [${buffer[i]}] | (${this.line}:${startColumn + i})`
-            );
+            logDebug(`ID [${buffer[i]}] | (${this.line}:${startColumn + i})`);
           }
 
           this.tokens.push(
@@ -153,7 +154,7 @@ export class Lexer {
           logDebug(
             `${keywords[key]} [${key}] | (${this.line}:${
               startColumn + keywordIndex
-          })`
+            })`
           );
 
           // Reset buffer and start accumulating after the keyword
@@ -199,7 +200,9 @@ export class Lexer {
       } else if (/\s/.test(this.currentChar)) {
         this.addToken(TokenType.SPACE, this.column);
       } else {
-        this.reportError(`Invalid character PID:${this.programID} [${this.currentChar}] in string`);
+        this.reportError(
+          `Invalid character PID:${this.programID} [${this.currentChar}] in string`
+        );
         this.advance();
       }
     }
@@ -222,17 +225,13 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.BOOL_OP, "==", this.line, startColumn)
       );
-      logDebug(
-        `${TokenType.BOOL_OP} [==] | (${this.line}: ${this.column})`
-      );
+      logDebug(`${TokenType.BOOL_OP} [==] | (${this.line}: ${this.column})`);
       this.advance();
     } else {
       this.tokens.push(
         new Token(TokenType.ASSIGN_OP, "=", this.line, startColumn)
       );
-      logDebug(
-        `${TokenType.ASSIGN_OP} [=] | (${this.line}: ${startColumn})`
-      );
+      logDebug(`${TokenType.ASSIGN_OP} [=] | (${this.line}: ${startColumn})`);
     }
   }
 
@@ -244,9 +243,7 @@ export class Lexer {
       this.tokens.push(
         new Token(TokenType.BOOL_OP, "!=", this.line, startColumn)
       );
-      logDebug(
-        `${TokenType.BOOL_OP} [!=] | (${this.line}: ${this.column})`
-      );
+      logDebug(`${TokenType.BOOL_OP} [!=] | (${this.line}: ${this.column})`);
     } else {
       this.reportError(`PID:${this.programID} Unrecognized token`);
     }
@@ -263,15 +260,16 @@ export class Lexer {
     this.tokens.push(
       new Token(TokenType.DIGIT, number, this.line, startColumn)
     );
-    logDebug(
-      `${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`
-    );
+    logDebug(`${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`);
   }
 
   private tokenizeEOP() {
     this.addToken(TokenType.EOP, this.column);
     reportWarningsandErrors(this);
-    this.programID++;
+    if (this.errors.length === 0) {
+      this.runParser(this.tokens, this.programID);
+      this.programID++;
+    }
 
     this.skipWhiteSpace();
     if (!this.endOfFileReached && this.currentChar !== "\0") {
@@ -280,6 +278,7 @@ export class Lexer {
     }
     this.errors = [];
     this.warnings = [];
+    this.tokens = [];
     this.column = 0;
     this.line = 0;
   }
@@ -321,18 +320,26 @@ export class Lexer {
     }
   }
   // for immediate reporting / storing for output at completion - move to gui.ts
-  private reportError(message: string): void {
-    logError(message, this.line, this.column);
+  public reportError(message: string, source: string = "Lexer"): void {
+    logError(message, this.line, this.column, source);
     this.errors.push({ message, line: this.line, column: this.column });
   }
-  private reportWarning(message: string): void {
-    logWarning(message, this.line, this.column);
+  public reportWarning(message: string, source: string = "Lexer"): void {
+    logWarning(message, this.line, this.column, source);
     this.warnings.push({ message, line: this.line, column: this.column });
   }
   private peek(offset: number = 1): string {
     if (this.position + offset - 1 < this.source.length) {
       return this.source[this.position + offset - 1];
     }
-    return "\0"; 
+    return "\0";
+  }
+
+  private runParser(tokens: Token[], programID: number): void {
+    const parser = new Parser(tokens, programID);
+    parser.parse();
+  }
+  public getTokens(): Token[] {
+    return this.tokens; // Returns all tokens after lexing is finished
   }
 }

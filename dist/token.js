@@ -15,8 +15,8 @@ export class Token {
 }
 export var TokenType;
 (function (TokenType) {
-    TokenType["OPEN_BLOCK"] = "OPEN_BLOCK";
-    TokenType["CLOSE_BLOCK"] = "CLOSE_BLOCK";
+    TokenType["LBRACE"] = "L-BRACE";
+    TokenType["RBRACE"] = "R-BRACE";
     TokenType["PRINT"] = "PRINT";
     TokenType["WHILE"] = "WHILE";
     TokenType["IF"] = "IF";

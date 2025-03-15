@@ -77,3 +77,25 @@ What happens if the program contains ("Hello\nWorld")?
 missing closing block or parentheses
 
 
+PARSER TESTS
+
+{}$
+
+{ print("abc") } $
+
+{int}$
+{int a = 1}$
+{int a a= 1}$
+
+
+
+{intaa=12}${intaa=1%2}$
+Make sure programs following the first do not display a CST tree if contiains errors 
+
+
+{intaa=1}$ {intaa=1#}$ {intaa=1}$
+{inta}${int}$ pass, parse fail
+{ int a = 1 @ } $ Lex Failed
+
+{ int a = 1 } $ pass
+{ int = 1 } $ fail
