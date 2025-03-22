@@ -92,7 +92,7 @@ export class Parser {
       "VAR_TYPE",
       "WHILE",
       "IF",
-      "L-PAREN",
+      "L-BRACE",
     ];
     return typesOfStatements.includes(token.type);
   }
