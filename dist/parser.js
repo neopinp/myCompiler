@@ -40,7 +40,7 @@ export class Parser {
         this.parseProgram();
         logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
         if (this.errors.length === 0) {
-            logInfo(`Displaying CST for Program ${this.programID}`, "Parser");
+            logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
             this.cst.display();
             return this.cst;
         }
@@ -73,7 +73,7 @@ export class Parser {
             "VAR_TYPE",
             "WHILE",
             "IF",
-            "L-PAREN",
+            "L-BRACE",
         ];
         return typesOfStatements.includes(token.type);
     }

@@ -19,18 +19,20 @@ export function logToScreen(level, message, source = "Lexer") {
     if (outputElement) {
         let cssClass = "";
         if (level.includes("DEBUG")) {
-            cssClass = "debug"; // Always gray for debug
+            cssClass = "debug";
         }
         else if (level.includes("INFO")) {
-            cssClass = `info ${source.toLowerCase()}`; // Color depends on source (Lexer, Parser)
+            cssClass = `info ${source.toLowerCase()}`;
         }
         else if (level.includes("ERROR")) {
-            cssClass = "error"; // Optional redundancy, already handled elsewhere
+            cssClass = "error";
         }
         else if (level.includes("WARNING")) {
-            cssClass = "warning"; // Optional redundancy
+            cssClass = "warning";
         }
-        outputElement.innerHTML += `<span class="${cssClass}">${level} ${source} - ${message}</span><br>`;
+        // Convert newlines to <br> for HTML
+        const formattedMessage = message.replace(/\n/g, "<br>");
+        outputElement.innerHTML += `<span class="${cssClass}">${level} ${source} - ${formattedMessage}</span><br>`;
     }
 }
 export function logToErrors(level, message, source = "Lexer") {
