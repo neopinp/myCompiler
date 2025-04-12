@@ -26,8 +26,8 @@ export enum TokenType {
   ASSIGN_OP = "ASSIGN_OP",        // =
   INT_OP = "INT_OP",              // +
   BOOL_OP = "BOOL_OP",            // == | !=
-  LPAREN = "L-PAREN",              // (
-  RPAREN = "R-PAREN",              // )
+  LPAREN = "LPAREN",              // (
+  RPAREN = "RPAREN",              // )
   EOP = "EOP",                    // $ - end of program
   COMMENT = "COMMENT",            
   INVALID = "INVALID",             // unkown token 

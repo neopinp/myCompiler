@@ -53,6 +53,8 @@
           <button class="dropdown-item" data-value="case9">
             Errors & Warnings
           </button>
+          <button class="dropdown-item" data-value="case10">Parser-I</button>
+          <button class="dropdown-item" data-value="case11">Parser-II</button>
           <button class="dropdown-item" data-value="asd$as">EOP Warning</button>
 
           <button class="dropdown-item" data-value="case8">
@@ -71,7 +73,6 @@
       Warnings & Errors
       <div id="output2" rows="10" cols="80"></div>
       <button id="run-button">Compile</button>
-
     </div>
     <div class="rightSide">
       <!-- Program Output -->
@@ -92,70 +93,80 @@
       // Multi-Line Test Cases
       const testCases = {
         case1: `{}$
-{{{{{{}}}}}}$
-{{{{{{}}} /* comments are ignored */ }}}}$
-{ /* comments are still ignored */ int @}$
-{
-int a
-a = a
-string b
-a=b
-}$`,
+      {{{{{{}}}}}}$
+      {{{{{{}}} /* comments are ignored */ }}}}$
+      { /* comments are still ignored */ int @}$
+      {
+      int a
+      a = a
+      string b
+      a=b
+      }$`,
         case2: `if x == 5 {
-  print("Hello") 
-}$`,
+        print("Hello")
+      }$`,
         case3: `{
-	string b = "this should not be even considered to be accurate"	
-}$`,
+      	string b = "this should not be even considered to be accurate"
+      }$`,
         case4: `/*LongTestCase-
-EverythingExceptBooleanDeclaration*/{/*IntDeclaration*/intaintba=0b=0/*WhileLoop*/while(a!=3){print(a)while(b!=3){print(b)b=1+bif(b==2){/*PrintStatement*/print("there is no spoon"/*Thiswilldonothing*/)}}b=0a=1+a}}$`,
+      EverythingExceptBooleanDeclaration*/{/*IntDeclaration*/intaintba=0b=0/*WhileLoop*/while(a!=3){print(a)while(b!=3){print(b)b=1+bif(b==2){/*PrintStatement*/print("there is no spoon"/*Thiswilldonothing*/)}}b=0a=1+a}}$`,
         case5: `/*Long Test Case - Everything Except Boolean Declaration */
-{
-/* Int Declaration */
-int a
-int b
-a = 0
-b=0
-/* While Loop */
-while (a != 3) {
-print(a)
-while (b != 3) {
-print(b)
-b = 1 + b
-if (b == 2) {
-/* Print Statement */
-print("there is no spoon" /* This will do nothing */ )
-}
-}
-b = 0
-a = 1+a
-}
+      {
+      /* Int Declaration */
+      int a
+      int b
+      a = 0
+      b=0
+      /* While Loop */
+      while (a != 3) {
+      print(a)
+      while (b != 3) {
+      print(b)
+      b = 1 + b
+      if (b == 2) {
+      /* Print Statement */
+      print("there is no spoon" /* This will do nothing */ )
+      }
+      }
+      b = 0
+      a = 1+a
+      }
+      }
+      $
+
+            `,
+        case6: `{/* Comment!!!*/ ()
+      print=whileif"teststring"
+      intstringbooleanfalse
+      true
+      ==!=+ a 0123456789}$`,
+        case7: `{}$/*$$$ This should be ignored */$$$"the$tringstillsplits"`,
+        case8: `{/*this caused my compiler to go into an infinite loop*/
+          {}
+          {int astringb}
+          {
+          print(a)print(2)print(0+1)print(false)print(true)print("test")print((a==b))print((a!="tes t"))
+          a = aa=bb=bb=1b=1+bb="te st"b=""b=falseb=true
+          while true{
+          if (5+a=="test"){
+
+          }
+          }
+
+          }
+          }$
+      `,
+        case9: `{	}#"+1#"/*/`,
+        case10: `{intii=0stringss="hello"booleanbb=(true==(1!=2))if(b==(true){while(true!=(b!=(false==(2!=3)))){i=1+iprint(s)}}print("ugly code")}$
+      `,
+        case11: `{
+  print(true)
+  print(false)
+  print("inta")
 }
 $
 
-      `,
-        case6: `{/* Comment!!!*/ ()
-print=whileif"teststring"
-intstringbooleanfalse
-true
-==!=+ a 0123456789}$`,
-        case7: `{}$/*$$$ This should be ignored */$$$"the$tringstillsplits"`,
-        case8: `{/*this caused my compiler to go into an infinite loop*/
-    {}
-    {int astringb}
-    {
-    print(a)print(2)print(0+1)print(false)print(true)print("test")print((a==b))print((a!="tes t"))
-    a = aa=bb=bb=1b=1+bb="te st"b=""b=falseb=true
-    while true{
-    if (5+a=="test"){
-    
-    }
-    }
-    
-    }
-    }$
 `,
-        case9: `{	}#"+1#"/*/`,
       };
 
       // Handle dropdown item selection

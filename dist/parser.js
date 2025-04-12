@@ -116,12 +116,14 @@ export class Parser {
         this.cst.startNonLeafNode("PrintStatement");
         logInfo(`parsePrintStatemnt()`, "Parser");
         if (this.match("PRINT")) {
-            if (this.match("L-PAREN")) {
+            if (this.match("LPAREN")) {
                 this.parseExpr();
-                this.match("R-PAREN");
+                if (!this.match("RPAREN")) {
+                    this.reportError(`Expected [RPAREN] to close print()`, "Parser");
+                }
             }
             else {
-                this.reportError(`Expeceted [)] after print`, "Parser");
+                this.reportError(`Expected [LPAREN] after print`, "Parser");
             }
         }
         else {
@@ -133,17 +135,37 @@ export class Parser {
         this.cst.startNonLeafNode("Expr");
         logInfo(`parseExpr()`, "Parser");
         const tokenType = this.currentToken.type;
-        if (tokenType === "DIGIT") {
+        if (tokenType === "LPAREN") {
+            this.match("LPAREN");
+            this.parseExpr();
+            if (this.currentToken.type === "BOOL_OP") {
+                this.match("BOOL_OP");
+                this.parseExpr();
+            }
+            // ✅ Safely match closing RPAREN — let match() handle any mismatch
+            if (!this.match("RPAREN")) {
+                this.reportError("Expected [RPAREN] to close parenthesis", "Parser");
+            }
+        }
+        else if (tokenType === "DIGIT") {
             this.parseIntExpr();
         }
         else if (tokenType === "CHAR_LIST") {
             this.parseStringExpr();
         }
         else if (tokenType === "BOOLEAN_LITERAL") {
-            this.parseBooleanExpr();
+            this.match("BOOLEAN_LITERAL");
+            if (this.currentToken.type === "BOOL_OP") {
+                this.match("BOOL_OP");
+                this.parseExpr();
+            }
         }
         else if (tokenType === "ID") {
             this.parseID();
+            if (this.currentToken.type === "BOOL_OP") {
+                this.match("BOOL_OP");
+                this.parseExpr();
+            }
         }
         else {
             this.reportError(`Unexpected Token [${this.currentToken.value}] in expression`, "Parser");
@@ -168,22 +190,20 @@ export class Parser {
         this.cst.startNonLeafNode("StringExpr");
         logInfo("parseStringExpr()", "Parser");
         if (this.match("CHAR_LIST")) {
-            while (this.currentToken.type === "CHAR" ||
-                this.currentToken.type === "SPACE") {
+            while (["CHAR", "SPACE"].includes(this.currentToken.type)) {
                 this.match(this.currentToken.type);
             }
-            this.match("CHAR_LIST");
-        }
-        else {
-            this.reportError('Expected ["] at start of StringExpr', "Parser");
+            if (!this.match("CHAR_LIST")) {
+                this.reportError(`Expected closing ["] for string`, "Parser");
+            }
         }
         this.cst.endNonLeafNode();
     }
     parseBooleanExpr() {
         this.cst.startNonLeafNode("BooleanExpr");
         // Peek at the token type before matching
-        if (this.currentToken.type === "L-PAREN") {
-            this.match("L-PAREN");
+        if (this.currentToken.type === "LPAREN") {
+            this.match("LPAREN");
             this.parseExpr();
             this.match("BOOL_OP");
             this.parseExpr();
@@ -205,25 +225,33 @@ export class Parser {
         this.cst.endNonLeafNode();
     }
     parseIfStatement() {
-        this.cst.startNonLeafNode("IF");
+        this.cst.startNonLeafNode("IfStatement");
         logInfo(`parseIfStatement()`, "Parser");
         if (this.match("IF")) {
-            this.parseBooleanExpr();
-            this.parseBlock();
-        }
-        else {
-            this.reportError(`Expected [IF] Keyword at start of IfStatement`, "Parser");
+            if (this.match("LPAREN")) {
+                this.parseExpr();
+                this.parseBlock();
+            }
+            else {
+                this.reportError("Expected [LPAREN] after IF", "Parser");
+            }
         }
         this.cst.endNonLeafNode();
     }
     parseWhileStatement() {
-        this.cst.startNonLeafNode("WHILE");
+        this.cst.startNonLeafNode("WhileStatement");
+        logInfo(`parseWhileStatement()`, "Parser");
         if (this.match("WHILE")) {
-            this.parseBooleanExpr();
-            this.parseBlock();
-        }
-        else {
-            this.reportError(`Expected [WHILE] Keyword at start of WhileStatement`, "Parser");
+            if (this.match("LPAREN")) {
+                this.parseExpr();
+                if (!this.match("RPAREN")) {
+                    this.reportError("Expected [RPAREN] to close WHILE condition", "Parser");
+                }
+                this.parseBlock();
+            }
+            else {
+                this.reportError("Expected [LPAREN] after WHILE", "Parser");
+            }
         }
         this.cst.endNonLeafNode();
     }
