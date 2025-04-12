@@ -46,13 +46,12 @@ export class Parser {
 
     if (this.currentIndex < this.tokens.length) {
       this.currentToken = this.tokens[this.currentIndex];
-    } 
+    }
   }
 
   public parse(): CST | null {
     logInfo(`Parsing Program ${this.programID}`, "Parser");
     logInfo(`parse()`, "Parser");
-    
 
     this.parseProgram();
     logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
@@ -61,7 +60,7 @@ export class Parser {
       this.cst.display();
       return this.cst;
     } else {
-      logInfo(`CST Terminated\n`, "Parser")
+      logInfo(`CST Terminated\n`, "Parser");
       return null;
     }
   }
@@ -120,7 +119,7 @@ export class Parser {
     } else if (tokenType === "WHILE") {
       this.parseWhileStatement();
     } else if (tokenType === "ID") {
-      this.parseAssignmentStatement(); // start with ID 
+      this.parseAssignmentStatement(); // start with ID
     } else if (tokenType === "VAR_TYPE") {
       this.parseVarDecl(); // start with VAR_TYPE
     } else if (tokenType === "L-BRACE") {
@@ -192,30 +191,15 @@ export class Parser {
     logInfo("parseStringExpr()", "Parser");
 
     if (this.match("CHAR_LIST")) {
-      this.parseCharList();
+      while (
+        this.currentToken.type === "CHAR" ||
+        this.currentToken.type === "SPACE"
+      ) {
+        this.match(this.currentToken.type);
+      }
       this.match("CHAR_LIST");
     } else {
       this.reportError('Expected ["] at start of StringExpr', "Parser");
-    }
-    this.cst.endNonLeafNode();
-  }
-
-  private parseCharList(): void {
-    this.cst.startNonLeafNode("CharList");
-
-    if (this.currentToken.type === "CHAR" || this.currentToken.type === "SPACE") {
-      const tokenType = this.currentToken.type;
-
-      this.cst.startNonLeafNode(tokenType === "CHAR" ? "CHAR": "SPACE");
-
-      if (tokenType === "CHAR") {
-        this.match("CHAR")
-      } else {
-        this.match("SPACE")
-      }
-
-      this.cst.endNonLeafNode();
-      this.parseCharList();
     }
 
     this.cst.endNonLeafNode();
@@ -224,17 +208,22 @@ export class Parser {
   private parseBooleanExpr(): void {
     this.cst.startNonLeafNode("BooleanExpr");
 
-    if (this.match("L-PAREN")) {
+    // Peek at the token type before matching
+    if (this.currentToken.type === "L-PAREN") {
+      this.match("L-PAREN");
       this.parseExpr();
       this.match("BOOL_OP");
       this.parseExpr();
-      this.match("R-PAREN");
-    } else if (this.match("BOOL_VAL")) {
+      this.match("RPAREN");
+    } else if (this.currentToken.type === "BOOLEAN_LITERAL") {
+      this.match("BOOLEAN_LITERAL"); // this will now actually match true/false
     } else {
-      this.reportError("Invalid BooleanExpr", "Parser");
+      this.reportError(`Invalid BooleanExpr`, "Parser");
     }
+
     this.cst.endNonLeafNode();
   }
+
   private parseID(): void {
     this.cst.startNonLeafNode("ID");
 
@@ -246,23 +235,28 @@ export class Parser {
 
   private parseIfStatement(): void {
     this.cst.startNonLeafNode("IF");
-    logInfo(`parseIfStatement()`, "Parser")
-     if (this.match("IF")) {
+    logInfo(`parseIfStatement()`, "Parser");
+    if (this.match("IF")) {
       this.parseBooleanExpr();
       this.parseBlock();
-     } else {
-      this.reportError(`Expected [IF] Keyword at start of IfStatement`, "Parser")
-     }
-     this.cst.endNonLeafNode();
-
+    } else {
+      this.reportError(
+        `Expected [IF] Keyword at start of IfStatement`,
+        "Parser"
+      );
+    }
+    this.cst.endNonLeafNode();
   }
   private parseWhileStatement(): void {
-    this.cst.startNonLeafNode("WHILE")
+    this.cst.startNonLeafNode("WHILE");
     if (this.match("WHILE")) {
       this.parseBooleanExpr();
       this.parseBlock();
     } else {
-      this.reportError(`Expected [WHILE] Keyword at start of WhileStatement`, "Parser")
+      this.reportError(
+        `Expected [WHILE] Keyword at start of WhileStatement`,
+        "Parser"
+      );
     }
     this.cst.endNonLeafNode();
   }
