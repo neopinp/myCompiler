@@ -1,4 +1,4 @@
-import { logInfo } from "./utils.js";
+import { logInfo, logError } from "./utils.js";
 export class SemanticAnalyzer {
     ast;
     symbolTable;
@@ -12,7 +12,6 @@ export class SemanticAnalyzer {
         this.visit(this.ast);
         this.reportErrors();
     }
-    // TYPE SCOPE CHECKING
     visit(node) {
         switch (node.name) {
             case "VarDecl":
@@ -34,7 +33,7 @@ export class SemanticAnalyzer {
                 const varName = node.value ?? node.name;
                 const varType = this.symbolTable.get(varName);
                 if (!varType) {
-                    this.errors.push(`Undeclared Identifier '${varName}'.`);
+                    this.reportError(`Undeclared Identifier '${varName}'.`);
                     return "undefined";
                 }
                 return varType;
@@ -49,7 +48,7 @@ export class SemanticAnalyzer {
         const varType = typeNode.name;
         const varName = idNode.value ?? idNode.name;
         if (this.symbolTable.has(varName)) {
-            this.errors.push(`Variable '${varName}' already declared.`);
+            this.reportError(`Variable '${varName}' already declared.`);
         }
         else {
             this.symbolTable.set(varName, varType);
@@ -57,28 +56,33 @@ export class SemanticAnalyzer {
     }
     handleAssignment(node) {
         const [idNode, exprNode] = node.children;
-        const varName = idNode.value ?? idNode.name;
+        const varName = idNode?.value ?? idNode?.name ?? "???";
         if (!this.symbolTable.has(varName)) {
-            this.errors.push(`Assignment to undeclared variable '${varName}'.`);
+            this.reportError(`Assignment to undeclared variable '${varName}'.`);
+            return;
+        }
+        if (!exprNode) {
+            this.reportError(`Assignment to '${varName}' is missing an expression.`);
             return;
         }
         const expectedType = this.symbolTable.get(varName);
         const actualType = this.visit(exprNode);
         if (actualType && expectedType !== actualType) {
-            this.errors.push(`Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`);
+            this.reportError(`Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`);
         }
     }
     handlePrint(node) {
         const exprType = this.visit(node.children[0]);
         if (!exprType) {
-            this.errors.push("Print statement has invalid or undeclared expression.");
+            this.reportError("Print statement has invalid or undeclared expression.");
         }
     }
+    reportError(message) {
+        logError(message, 0, 0, "SemanticAnalyzer");
+        this.errors.push(message);
+    }
     reportErrors() {
-        if (this.errors.length > 0) {
-            this.errors.forEach((err) => reportError(`Semantic Error: ${err}`));
-        }
-        else {
+        if (this.errors.length === 0) {
             logInfo("Semantic Analysis: No Errors", "SemanticAnalyzer");
         }
     }

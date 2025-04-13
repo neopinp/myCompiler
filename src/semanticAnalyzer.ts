@@ -1,4 +1,4 @@
-import { logInfo } from "./utils.js";
+import { logInfo, logError } from "./utils.js";
 import { ASTNode } from "./ast.js";
 
 export class SemanticAnalyzer {
@@ -15,7 +15,6 @@ export class SemanticAnalyzer {
     this.reportErrors();
   }
 
-  // TYPE SCOPE CHECKING
   visit(node: ASTNode): string | void {
     switch (node.name) {
       case "VarDecl":
@@ -37,7 +36,7 @@ export class SemanticAnalyzer {
         const varName = node.value ?? node.name;
         const varType = this.symbolTable.get(varName);
         if (!varType) {
-          this.errors.push(`Undeclared Identifier '${varName}'.`);
+          this.reportError(`Undeclared Identifier '${varName}'.`);
           return "undefined";
         }
         return varType;
@@ -54,7 +53,7 @@ export class SemanticAnalyzer {
     const varName = idNode.value ?? idNode.name;
 
     if (this.symbolTable.has(varName)) {
-      this.errors.push(`Variable '${varName}' already declared.`);
+      this.reportError(`Variable '${varName}' already declared.`);
     } else {
       this.symbolTable.set(varName, varType);
     }
@@ -62,10 +61,16 @@ export class SemanticAnalyzer {
 
   handleAssignment(node: ASTNode) {
     const [idNode, exprNode] = node.children;
-    const varName = idNode.value ?? idNode.name;
+
+    const varName = idNode?.value ?? idNode?.name ?? "???";
 
     if (!this.symbolTable.has(varName)) {
-      this.errors.push(`Assignment to undeclared variable '${varName}'.`);
+      this.reportError(`Assignment to undeclared variable '${varName}'.`);
+      return;
+    }
+
+    if (!exprNode) {
+      this.reportError(`Assignment to '${varName}' is missing an expression.`);
       return;
     }
 
@@ -73,7 +78,7 @@ export class SemanticAnalyzer {
     const actualType = this.visit(exprNode);
 
     if (actualType && expectedType !== actualType) {
-      this.errors.push(
+      this.reportError(
         `Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`
       );
     }
@@ -82,14 +87,17 @@ export class SemanticAnalyzer {
   handlePrint(node: ASTNode) {
     const exprType = this.visit(node.children[0]);
     if (!exprType) {
-      this.errors.push("Print statement has invalid or undeclared expression.");
+      this.reportError("Print statement has invalid or undeclared expression.");
     }
   }
 
+  reportError(message: string) {
+    logError(message, 0, 0, "SemanticAnalyzer");
+    this.errors.push(message);
+  }
+
   reportErrors() {
-    if (this.errors.length > 0) {
-      this.errors.forEach((err) => reportError(`Semantic Error: ${err}`));
-    } else {
+    if (this.errors.length === 0) {
       logInfo("Semantic Analysis: No Errors", "SemanticAnalyzer");
     }
   }

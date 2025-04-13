@@ -99,3 +99,120 @@ Make sure programs following the first do not display a CST tree if contiains er
 
 { int a = 1 } $ pass
 { int = 1 } $ fail
+
+
+
+
+/ Semantic Analysis Test Cases/
+
+Variable Declarations
+-----------------------------------------
+{
+  int x
+  string y
+}
+$
+------------------------------------------
+
+***
+Undeclared Variable Usage 
+--------------------------------------------
+{
+  print(x)
+}
+$
+---------------------------------------------
+
+
+
+Valid String Declaration + Usage ****
+-------------------------------------
+{
+  string s
+  s = "hello"
+  print(s)
+}
+$
+
+
+
+Mismatched Assignment 
+----------------------------------------
+{
+  boolean b
+  b = 1
+}
+$
+
+
+Boolean Logic with print
+-----------------------------------------
+{
+  boolean b
+  b = true
+  print(b)
+}
+$
+
+
+
+Redudantn Declaration
+-------------------------------
+{
+  int x
+  int x
+}
+$
+
+ASsignment to Undeclared Variable
+-------------------------------
+{
+  y = 10
+}
+$
+
+
+Empty Block 
+----------------------------------
+{
+}
+$
+
+
+Valid Int Usage
+---------------------------------
+{
+  int a
+  a = 1
+  print(a)
+}
+$
+
+
+Multi-Type, Multi-Statement program
+-----------------------------------------
+{
+  int i
+  string s
+  boolean b
+  i = 1
+  s = "abc"
+  b = false
+  print(i)
+  print(s)
+  print(b)
+}
+$
+
+
+Mismatched Boolean Expression
+-------------------------------------------
+{
+  boolean flag
+  flag = 1     // invalid
+}
+$
+
+
+
+

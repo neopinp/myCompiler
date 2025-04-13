@@ -53,14 +53,23 @@
           <button class="dropdown-item" data-value="case9">
             Errors & Warnings
           </button>
+          <button class="dropdown-item" data-value="case8">
+            more more more
+          </button>
+          <button class="dropdown-item" data-value="asd$as">EOP Warning</button>
           <button class="dropdown-item" data-value="case10">Parser-I</button>
           <button class="dropdown-item" data-value="case11">Parser-II</button>
           <button class="dropdown-item" data-value="case12">Parser-III.</button>
           <button class="dropdown-item" data-value="case13">Parser-IV.</button>
-          <button class="dropdown-item" data-value="asd$as">EOP Warning</button>
-
-          <button class="dropdown-item" data-value="case8">
-            more more more
+          <button class="dropdown-item" data-value="case14">Var Decl</button>
+          <button class="dropdown-item" data-value="case15">
+            Undeclared Var
+          </button>
+          <button class="dropdown-item" data-value="case16">
+            Valid Str + Usage
+          </button>
+          <button class="dropdown-item" data-value="case17">
+            Mismatched Assignment
           </button>
         </div>
       </div>
@@ -175,6 +184,27 @@ $
 lines"
 }$`,
         case13: `{a=12}$`,
+        case14: `{
+  int x
+  string y
+}
+$
+`,
+        case15: `{
+  print(x)
+}
+$`,
+        case16: `{
+  string s
+  s = "hello"
+  print(s)
+}
+$`,
+        case17: `{
+  boolean b
+  b = 1
+}
+$`,
       };
 
       // Handle dropdown item selection

@@ -29,9 +29,16 @@ export class ASTBuilder {
             case "Block": {
                 const block = new ASTNode("Block");
                 for (const child of cstNode.children) {
-                    const stmt = this.walk(child);
-                    if (stmt)
-                        block.children.push(stmt);
+                    const result = this.walk(child);
+                    if (result) {
+                        // flatten "Flat" wrapper from StatementList
+                        if (result.name === "Flat") {
+                            block.children.push(...result.children);
+                        }
+                        else {
+                            block.children.push(result);
+                        }
+                    }
                 }
                 return block;
             }
@@ -47,17 +54,34 @@ export class ASTBuilder {
             }
             case "Expr": {
                 const child = cstNode.children[0];
-                if (child.name.startsWith("[BOOLEAN_LITERAL]")) {
-                    return new ASTNode("BooleanExpr");
+                // If Expr → IntExpr → [DIGIT] 1
+                if (child.name === "IntExpr" ||
+                    child.name === "BooleanExpr" ||
+                    child.name === "StringExpr") {
+                    return this.walk(child); // ✅ recurse into the sub-expression
                 }
                 if (child.name.startsWith("[DIGIT]")) {
-                    return new ASTNode("IntExpr");
+                    const value = child.name.split("] ")[1];
+                    return new ASTNode("IntExpr", value); // fallback (rare)
+                }
+                if (child.name.startsWith("[BOOLEAN_LITERAL]")) {
+                    const value = child.name.split("] ")[1];
+                    return new ASTNode("BooleanExpr", value);
                 }
                 if (child.name.startsWith("[ID]")) {
-                    return new ASTNode("Identifier", child.name.split("] ")[1]);
+                    const value = child.name.split("] ")[1];
+                    return new ASTNode("Identifier", value);
                 }
                 if (child.name === "StringExpr") {
-                    return this.walk(child);
+                    return this.walk(child); // ✅ handled below
+                }
+                return null;
+            }
+            case "IntExpr": {
+                const digitNode = cstNode.children.find((c) => c.name.startsWith("[DIGIT]"));
+                if (digitNode) {
+                    const value = digitNode.name.split("] ")[1];
+                    return new ASTNode("IntExpr", value);
                 }
                 return null;
             }
@@ -70,26 +94,27 @@ export class ASTBuilder {
                 }
                 return new ASTNode("StringExpr", value);
             }
-            case "[BOOLEAN_LITERAL] true":
-            case "[BOOLEAN_LITERAL] false":
-            case "[ID] a":
-            case "[DIGIT] 1":
-            case "[DIGIT] 0":
-                return new ASTNode(cstNode.name.split("] ")[1]);
             case "VarDecl": {
                 const [typeCST, idCST] = cstNode.children;
+                const type = typeCST.name.split("] ")[1];
+                const id = idCST.name.split("] ")[1];
                 const varNode = new ASTNode("VarDecl");
-                varNode.children.push(new ASTNode(typeCST.name)); // "int", "string", etc.
-                varNode.children.push(new ASTNode("Identifier", idCST.name.split("] ")[1]));
+                varNode.children.push(new ASTNode(type));
+                varNode.children.push(new ASTNode("Identifier", id));
                 return varNode;
             }
             case "AssignmentStatement": {
-                const [idCST, assignOpCST, exprCST] = cstNode.children;
+                const [idCST, , exprCST] = cstNode.children; // skip ASSIGN_OP
+                const id = idCST.name.split("] ")[1];
                 const assignNode = new ASTNode("Assignment");
-                assignNode.children.push(new ASTNode("Identifier", idCST.name.split("] ")[1]));
-                const exprAST = this.walk(exprCST);
-                if (exprAST)
+                assignNode.children.push(new ASTNode("Identifier", id));
+                const exprAST = this.walk(exprCST); // ❗️This must not return null
+                if (exprAST) {
                     assignNode.children.push(exprAST);
+                }
+                else {
+                    console.warn("ASTBuilder: exprAST is null in AssignmentStatement");
+                }
                 return assignNode;
             }
             case "StatementList": {
@@ -102,9 +127,9 @@ export class ASTBuilder {
                 if (nodes.length === 1)
                     return nodes[0];
                 if (nodes.length > 1) {
-                    const wrapper = new ASTNode("Statements");
-                    wrapper.children.push(...nodes);
-                    return wrapper;
+                    const flat = new ASTNode("Flat");
+                    flat.children.push(...nodes);
+                    return flat;
                 }
                 return null;
             }
