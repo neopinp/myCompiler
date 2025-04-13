@@ -1,5 +1,5 @@
-import { AST, ASTNode } from "./ast.js";
 import { CSTNode } from "./cst.js";
+import { AST, ASTNode } from "./ast.js";
 
 export class ASTBuilder {
   private ast: AST;
@@ -54,12 +54,25 @@ export class ASTBuilder {
       }
 
       case "Expr": {
-        const child = cstNode.children.find((c) =>
-          ["BOOLEAN_LITERAL", "ID", "DIGIT", "StringExpr"].some((type) =>
-            c.name.includes(type)
-          )
-        );
-        return child ? this.walk(child) : null;
+        const child = cstNode.children[0];
+
+        if (child.name.startsWith("[BOOLEAN_LITERAL]")) {
+          return new ASTNode("BooleanExpr");
+        }
+
+        if (child.name.startsWith("[DIGIT]")) {
+          return new ASTNode("IntExpr");
+        }
+
+        if (child.name.startsWith("[ID]")) {
+          return new ASTNode("Identifier", child.name.split("] ")[1]);
+        }
+
+        if (child.name === "StringExpr") {
+          return this.walk(child);
+        }
+
+        return null;
       }
 
       case "StringExpr": {
@@ -69,7 +82,7 @@ export class ASTBuilder {
             value += c.name.slice(7);
           }
         }
-        return new ASTNode(`"${value}"`);
+        return new ASTNode("StringExpr", value);
       }
 
       case "[BOOLEAN_LITERAL] true":
@@ -78,6 +91,25 @@ export class ASTBuilder {
       case "[DIGIT] 1":
       case "[DIGIT] 0":
         return new ASTNode(cstNode.name.split("] ")[1]);
+      case "VarDecl": {
+        const [typeCST, idCST] = cstNode.children;
+        const varNode = new ASTNode("VarDecl");
+        varNode.children.push(new ASTNode(typeCST.name)); // "int", "string", etc.
+        varNode.children.push(
+          new ASTNode("Identifier", idCST.name.split("] ")[1])
+        );
+        return varNode;
+      }
+      case "AssignmentStatement": {
+        const [idCST, assignOpCST, exprCST] = cstNode.children;
+        const assignNode = new ASTNode("Assignment");
+        assignNode.children.push(
+          new ASTNode("Identifier", idCST.name.split("] ")[1])
+        );
+        const exprAST = this.walk(exprCST);
+        if (exprAST) assignNode.children.push(exprAST);
+        return assignNode;
+      }
 
       case "StatementList": {
         const nodes: ASTNode[] = [];

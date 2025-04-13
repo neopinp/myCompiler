@@ -1,10 +1,12 @@
 export class ASTNode {
   name: string;
   children: ASTNode[];
+  value?: string;
 
-  constructor(name: string) {
+  constructor(name: string, value?: string) {
     this.name = name;
     this.children = [];
+    this.value = value;
   }
 }
 
@@ -24,7 +26,7 @@ export class AST {
     if (!outputElement) return;
 
     const label = document.createElement("h3");
-    label.textContent = "Abstract Syntax Tree (AST)";
+    label.textContent = "Syntax Tree (AST)";
     label.style.marginTop = "20px";
 
     const container = document.createElement("ul");
@@ -40,7 +42,9 @@ export class AST {
 
     if (node.children.length > 0) {
       const ul = document.createElement("ul");
-      node.children.forEach((child) => ul.appendChild(this.generateHTML(child)));
+      node.children.forEach((child) =>
+        ul.appendChild(this.generateHTML(child))
+      );
       li.appendChild(ul);
     }
 

@@ -1,9 +1,11 @@
 export class ASTNode {
     name;
     children;
-    constructor(name) {
+    value;
+    constructor(name, value) {
         this.name = name;
         this.children = [];
+        this.value = value;
     }
 }
 export class AST {
@@ -19,7 +21,7 @@ export class AST {
         if (!outputElement)
             return;
         const label = document.createElement("h3");
-        label.textContent = "Abstract Syntax Tree (AST)";
+        label.textContent = "Syntax Tree (AST)";
         label.style.marginTop = "20px";
         const container = document.createElement("ul");
         container.appendChild(this.generateHTML(this.root));

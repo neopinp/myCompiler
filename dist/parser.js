@@ -2,6 +2,7 @@ import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
 import { ASTBuilder } from "./astBuilder.js";
+import { SemanticAnalyzer } from "./semanticAnalyzer.js";
 export class Parser {
     tokens;
     currentIndex = 0;
@@ -37,24 +38,27 @@ export class Parser {
     }
     parse() {
         logInfo(`Parsing Program ${this.programID}`, "Parser");
-        logInfo(`parse()`, "Parser");
         this.parseProgram();
         logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
         if (this.errors.length === 0) {
-            logInfo(`Displaying CST for Program ${this.programID}`, "Parser");
+            logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
             this.cst.display();
-            // 🎯 Build and display the AST here
-            logInfo(`AST - Building AST for Program ${this.programID}`, "Parser");
             const astBuilder = new ASTBuilder();
             const ast = astBuilder.build(this.cst.getRoot());
             logInfo(`AST - Displaying AST for Program ${this.programID}`, "Parser");
             ast.display();
-            return this.cst;
-        }
-        else {
-            logInfo(`CST Terminated\n`, "Parser");
+            const root = ast.getRoot();
+            if (root) {
+                logInfo(`SEMANTIC - Starting Semantic Analysis`, "SemanticAnalyzer");
+                const analyzer = new SemanticAnalyzer(root);
+                analyzer.analyze();
+            }
+            else {
+                logError("Semantic Analysis skipped: AST root is null.", 0, 0, "SemanticAnalyzer");
+            }
             return null;
         }
+        return this.cst;
     }
     parseProgram() {
         logInfo(`parseProgram()`, "Parser");
@@ -149,7 +153,6 @@ export class Parser {
                 this.match("BOOL_OP");
                 this.parseExpr();
             }
-            // ✅ Safely match closing RPAREN — let match() handle any mismatch
             if (!this.match("RPAREN")) {
                 this.reportError("Expected [RPAREN] to close parenthesis", "Parser");
             }

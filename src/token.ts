@@ -1,7 +1,7 @@
 export class Token {
   constructor(
     public type: TokenType,
-    public value: string, 
+    public value: string,
     public line: number,
     public column: number
   ) {}
@@ -12,24 +12,24 @@ export class Token {
 }
 
 export enum TokenType {
-  LBRACE = "L-BRACE",       // {
-  RBRACE = "R-BRACE",    // }
-  PRINT = "PRINT",              
-  WHILE = "WHILE",              
-  IF = "IF",                    
-  VAR_TYPE = "VAR_TYPE",          // int
+  LBRACE = "L-BRACE", // {
+  RBRACE = "R-BRACE", // }
+  PRINT = "PRINT",
+  WHILE = "WHILE",
+  IF = "IF",
+  VAR_TYPE = "VAR_TYPE", // int
   BOOLEAN_LITERAL = "BOOLEAN_LITERAL", // true | false
-  IDENTIFIER = "ID",      // a-z 
-  DIGIT = "DIGIT",                // 0-9
-  CHAR_LIST = "CHAR_LIST",        // char(s) in quotes
-  CHAR = "CHAR",              
-  ASSIGN_OP = "ASSIGN_OP",        // =
-  INT_OP = "INT_OP",              // +
-  BOOL_OP = "BOOL_OP",            // == | !=
-  LPAREN = "LPAREN",              // (
-  RPAREN = "RPAREN",              // )
-  EOP = "EOP",                    // $ - end of program
-  COMMENT = "COMMENT",            
-  INVALID = "INVALID",             // unkown token 
-  SPACE = "SPACE"
+  IDENTIFIER = "ID", // a-z
+  DIGIT = "DIGIT", // 0-9
+  CHAR_LIST = "CHAR_LIST", // char(s) in quotes
+  CHAR = "CHAR",
+  ASSIGN_OP = "ASSIGN_OP", // =
+  INT_OP = "INT_OP", // +
+  BOOL_OP = "BOOL_OP", // == | !=
+  LPAREN = "LPAREN", // (
+  RPAREN = "RPAREN", // )
+  EOP = "EOP", // $ - end of program
+  COMMENT = "COMMENT",
+  INVALID = "INVALID", // unkown token
+  SPACE = "SPACE",
 }

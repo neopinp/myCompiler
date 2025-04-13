@@ -4,6 +4,8 @@ import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
 import { ASTBuilder } from "./astBuilder.js";
 import { AST } from "./ast.js";
+import { SemanticAnalyzer } from "./semanticAnalyzer.js";
+
 
 export class Parser {
   private tokens: Token[];
@@ -53,27 +55,35 @@ export class Parser {
 
   public parse(): CST | null {
     logInfo(`Parsing Program ${this.programID}`, "Parser");
-    logInfo(`parse()`, "Parser");
-
     this.parseProgram();
     logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
 
     if (this.errors.length === 0) {
-      logInfo(`Displaying CST for Program ${this.programID}`, "Parser");
+      logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
       this.cst.display();
 
-      logInfo(`AST - Building AST for Program ${this.programID}`, "Parser");
       const astBuilder = new ASTBuilder();
       const ast: AST = astBuilder.build(this.cst.getRoot());
 
       logInfo(`AST - Displaying AST for Program ${this.programID}`, "Parser");
-      ast.display(); 
+      ast.display();
 
-      return this.cst;
-    } else {
-      logInfo(`CST Terminated\n`, "Parser");
+      const root = ast.getRoot();
+      if (root) {
+        logInfo(`SEMANTIC - Starting Semantic Analysis`, "SemanticAnalyzer");
+        const analyzer = new SemanticAnalyzer(root);
+        analyzer.analyze();
+      } else {
+        logError(
+          "Semantic Analysis skipped: AST root is null.",
+          0,
+          0,
+          "SemanticAnalyzer"
+        );
+      }
       return null;
     }
+    return this.cst;
   }
 
   private parseProgram(): void {
