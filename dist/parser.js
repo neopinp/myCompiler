@@ -1,6 +1,7 @@
 import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
+import { ASTBuilder } from "./astBuilder.js";
 export class Parser {
     tokens;
     currentIndex = 0;
@@ -40,8 +41,14 @@ export class Parser {
         this.parseProgram();
         logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
         if (this.errors.length === 0) {
-            logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
+            logInfo(`Displaying CST for Program ${this.programID}`, "Parser");
             this.cst.display();
+            // 🎯 Build and display the AST here
+            logInfo(`AST - Building AST for Program ${this.programID}`, "Parser");
+            const astBuilder = new ASTBuilder();
+            const ast = astBuilder.build(this.cst.getRoot());
+            logInfo(`AST - Displaying AST for Program ${this.programID}`, "Parser");
+            ast.display();
             return this.cst;
         }
         else {
@@ -201,7 +208,6 @@ export class Parser {
     }
     parseBooleanExpr() {
         this.cst.startNonLeafNode("BooleanExpr");
-        // Peek at the token type before matching
         if (this.currentToken.type === "LPAREN") {
             this.match("LPAREN");
             this.parseExpr();
@@ -210,7 +216,7 @@ export class Parser {
             this.match("RPAREN");
         }
         else if (this.currentToken.type === "BOOLEAN_LITERAL") {
-            this.match("BOOLEAN_LITERAL"); // this will now actually match true/false
+            this.match("BOOLEAN_LITERAL");
         }
         else {
             this.reportError(`Invalid BooleanExpr`, "Parser");

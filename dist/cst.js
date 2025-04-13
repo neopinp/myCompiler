@@ -1,5 +1,5 @@
 import { logWarning } from "./utils.js";
-class CSTNode {
+export class CSTNode {
     name;
     children;
     parent;
@@ -41,7 +41,13 @@ export class CST {
             return;
         }
         const treeHTML = this.generateHTML(this.root);
+        const cstTitle = document.createElement("h3");
+        cstTitle.textContent = "Concrete Syntax Tree (CST)";
+        outputElement.appendChild(cstTitle);
         outputElement.appendChild(treeHTML);
+        // Add a visual break before AST appears
+        const separator = document.createElement("hr");
+        outputElement.appendChild(separator);
     }
     generateHTML(node) {
         const li = document.createElement("li");
@@ -54,6 +60,9 @@ export class CST {
             li.appendChild(ul);
         }
         return li;
+    }
+    getRoot() {
+        return this.root;
     }
 }
 //# sourceMappingURL=cst.js.map

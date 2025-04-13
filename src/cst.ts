@@ -1,7 +1,7 @@
-import { Token} from "./token.js";
+import { Token } from "./token.js";
 import { logWarning } from "./utils.js";
 
-class CSTNode {
+export class CSTNode {
   public name: string;
   public children: CSTNode[];
   public parent: CSTNode | null;
@@ -48,11 +48,19 @@ export class CST {
       console.error("CST output element not found!");
       return;
     }
-
-
+  
     const treeHTML = this.generateHTML(this.root);
+  
+    const cstTitle = document.createElement("h3");
+    cstTitle.textContent = "Concrete Syntax Tree (CST)";
+    outputElement.appendChild(cstTitle);
     outputElement.appendChild(treeHTML);
+  
+    // Add a visual break before AST appears
+    const separator = document.createElement("hr");
+    outputElement.appendChild(separator);
   }
+  
   private generateHTML(node: CSTNode): HTMLElement {
     const li = document.createElement("li");
     li.textContent = node.name;
@@ -66,5 +74,8 @@ export class CST {
     }
 
     return li;
+  }
+  public getRoot(): CSTNode {
+    return this.root;
   }
 }

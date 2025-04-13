@@ -2,6 +2,8 @@ import { Token } from "./token.js";
 import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
+import { ASTBuilder } from "./astBuilder.js";
+import { AST } from "./ast.js";
 
 export class Parser {
   private tokens: Token[];
@@ -55,15 +57,25 @@ export class Parser {
 
     this.parseProgram();
     logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
+
     if (this.errors.length === 0) {
-      logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
+      logInfo(`Displaying CST for Program ${this.programID}`, "Parser");
       this.cst.display();
+
+      logInfo(`AST - Building AST for Program ${this.programID}`, "Parser");
+      const astBuilder = new ASTBuilder();
+      const ast: AST = astBuilder.build(this.cst.getRoot());
+
+      logInfo(`AST - Displaying AST for Program ${this.programID}`, "Parser");
+      ast.display(); 
+
       return this.cst;
     } else {
       logInfo(`CST Terminated\n`, "Parser");
       return null;
     }
   }
+
   private parseProgram(): void {
     logInfo(`parseProgram()`, "Parser");
 
@@ -170,7 +182,6 @@ export class Parser {
         this.parseExpr();
       }
 
-      // ✅ Safely match closing RPAREN — let match() handle any mismatch
       if (!this.match("RPAREN")) {
         this.reportError("Expected [RPAREN] to close parenthesis", "Parser");
       }
@@ -233,7 +244,6 @@ export class Parser {
   private parseBooleanExpr(): void {
     this.cst.startNonLeafNode("BooleanExpr");
 
-    // Peek at the token type before matching
     if (this.currentToken.type === "LPAREN") {
       this.match("LPAREN");
       this.parseExpr();
@@ -241,7 +251,7 @@ export class Parser {
       this.parseExpr();
       this.match("RPAREN");
     } else if (this.currentToken.type === "BOOLEAN_LITERAL") {
-      this.match("BOOLEAN_LITERAL"); // this will now actually match true/false
+      this.match("BOOLEAN_LITERAL");
     } else {
       this.reportError(`Invalid BooleanExpr`, "Parser");
     }
@@ -264,7 +274,7 @@ export class Parser {
     if (this.match("IF")) {
       if (this.match("LPAREN")) {
         this.parseExpr();
-        this.parseBlock(); 
+        this.parseBlock();
       } else {
         this.reportError("Expected [LPAREN] after IF", "Parser");
       }
