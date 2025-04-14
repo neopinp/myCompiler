@@ -1,3 +1,4 @@
+import { TokenType } from "./token.js";
 import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
@@ -239,6 +240,7 @@ export class Parser {
         if (this.match("IF")) {
             if (this.match("LPAREN")) {
                 this.parseExpr();
+                this.match(TokenType.RPAREN);
                 this.parseBlock();
             }
             else {

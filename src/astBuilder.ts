@@ -59,22 +59,33 @@ export class ASTBuilder {
         return null;
       }
       case "IfStatement": {
-        const [boolExprCST, blockCST] = cstNode.children;
-        const ifNode = new ASTNode("If", undefined);
-        const boolExpr = this.walk(boolExprCST);
-        const block = this.walk(blockCST);
-        if (boolExpr) ifNode.children.push(boolExpr);
+        const exprCST = cstNode.children.find((c) => c.name === "Expr");
+        const blockCST = cstNode.children.find((c) => c.name === "Block");
+
+        const ifNode = new ASTNode("If");
+
+        const condition = exprCST ? this.walk(exprCST) : null;
+        const block = blockCST ? this.walk(blockCST) : null;
+
+        if (condition) ifNode.children.push(condition);
         if (block) ifNode.children.push(block);
+
         return ifNode;
       }
 
       case "WhileStatement": {
-        const [boolExprCST, blockCST] = cstNode.children;
+        // [WHILE] while, [LPAREN] (, Expr, [RPAREN] ), Block
+        const exprCST = cstNode.children.find((c) => c.name === "Expr");
+        const blockCST = cstNode.children.find((c) => c.name === "Block");
+
+        const condAST = exprCST ? this.walk(exprCST) : null;
+        const blockAST = blockCST ? this.walk(blockCST) : null;
+
         const whileNode = new ASTNode("While", undefined);
-        const boolExpr = this.walk(boolExprCST);
-        const block = this.walk(blockCST);
-        if (boolExpr) whileNode.children.push(boolExpr);
-        if (block) whileNode.children.push(block);
+
+        if (condAST) whileNode.children.push(condAST);
+        if (blockAST) whileNode.children.push(blockAST);
+
         return whileNode;
       }
 
@@ -155,7 +166,7 @@ export class ASTBuilder {
         const assignNode = new ASTNode("Assignment");
         assignNode.children.push(new ASTNode("Identifier", id));
 
-        const exprAST = this.walk(exprCST); // ❗️This must not return null
+        const exprAST = this.walk(exprCST);
 
         if (exprAST) {
           assignNode.children.push(exprAST);

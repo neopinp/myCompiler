@@ -90,6 +90,12 @@
           <button class="dropdown-item" data-value="case24">
             Global Scope Checking
           </button>
+          <button class="dropdown-item" data-value="case25">
+            If Statement
+          </button>
+          <button class="dropdown-item" data-value="case26">
+            While Statement
+          </button>
         </div>
       </div>
 
@@ -269,6 +275,24 @@ $`,
 }
 $
 `,
+        case25: `{
+  boolean b
+  b = true
+  if (b) {
+    print(b)
+  }
+}
+$
+`,
+        case26: `{
+  int i
+  i = 1
+  while (i) {
+    print(i)
+  }
+}
+$
+`,
       };
 
       // Handle dropdown item selection
@@ -276,7 +300,6 @@ $
         item.addEventListener("click", function () {
           let selectedValue = this.getAttribute("data-value");
 
-          // If the test case is Proj1, use predefined multiline data
           if (selectedValue in testCases) {
             document.getElementById("sourceCode").value =
               testCases[selectedValue];
@@ -289,8 +312,8 @@ $
         const sourceCode = document.getElementById("sourceCode");
 
         sourceCode.addEventListener("input", function () {
-          this.style.height = "auto"; // Reset height to recalculate
-          this.style.height = Math.min(this.scrollHeight, 400) + "px"; // Expand but respect max-height
+          this.style.height = "auto"; 
+          this.style.height = Math.min(this.scrollHeight, 400) + "px";
         });
       });
     </script>

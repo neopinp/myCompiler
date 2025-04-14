@@ -3,16 +3,23 @@ export class SemanticAnalyzer {
     ast;
     symbolTableStack;
     errors;
+    symbols; // Flat list for display
     constructor(ast) {
         this.ast = ast;
         this.symbolTableStack = [new Map()];
         this.errors = [];
+        this.symbols = [];
     }
     analyze() {
         this.visit(this.ast);
         this.reportErrors();
+        this.displaySymbolTable();
     }
     visit(node) {
+        if (!node) {
+            this.reportError("Tried to visit an undefined node.");
+            return;
+        }
         switch (node.name) {
             case "Block":
                 this.enterScope();
@@ -36,12 +43,21 @@ export class SemanticAnalyzer {
                 return "string";
             case "Identifier": {
                 const varName = node.value ?? node.name;
-                const varType = this.lookupVariable(varName);
-                if (!varType) {
+                const symbol = this.lookupVariable(varName);
+                if (!symbol) {
                     this.reportError(`Undeclared Identifier '${varName}'.`);
                     return "undefined";
                 }
-                return varType;
+                return symbol.type;
+            }
+            case "If":
+            case "While": {
+                this.handleWhile(node);
+                break;
+            }
+            case "If":
+            case "While": {
+                this.handleWhile(node);
             }
             default:
                 node.children.forEach((child) => this.visit(child));
@@ -52,8 +68,9 @@ export class SemanticAnalyzer {
         const [typeNode, idNode] = node.children;
         const varType = typeNode.name;
         const varName = idNode.value ?? idNode.name;
-        if (!this.declareVariable(varName, varType)) {
-            this.reportError(`Variable '${varName}' already declared in this scope.`, node.line, node.column);
+        const { line, column } = idNode;
+        if (!this.declareVariable(varName, varType, line, column)) {
+            this.reportError(`Variable '${varName}' already declared in this scope.`, line, column);
         }
     }
     handleAssignment(node) {
@@ -69,7 +86,7 @@ export class SemanticAnalyzer {
             this.reportError(`Assignment to undeclared variable '${varName}'. `, node.line, node.column);
             return;
         }
-        if (actualType && expectedType !== actualType) {
+        if (actualType && expectedType?.type !== actualType) {
             this.reportError(`Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`, node.line, node.column);
         }
     }
@@ -78,6 +95,21 @@ export class SemanticAnalyzer {
         if (!exprType) {
             this.reportError("Print statement has invalid or undeclared expression.", node.line, node.column);
         }
+    }
+    handleWhile(node) {
+        const condExpr = node.children[0];
+        const bodyBlock = node.children[1];
+        if (!condExpr || !bodyBlock) {
+            this.reportError("Bad While Loop.", node.line, node.column);
+            return;
+        }
+        const condType = this.visit(condExpr);
+        if (condType !== "boolean") {
+            this.reportError("While condition must evaluate to a boolean.", condExpr.line, condExpr.column);
+        }
+        this.enterScope();
+        this.visit(bodyBlock);
+        this.exitScope();
     }
     reportError(message, line = 0, column = 0) {
         logError(message, line, column, "SemanticAnalyzer");
@@ -96,20 +128,55 @@ export class SemanticAnalyzer {
         this.symbolTableStack.pop();
     }
     // VARIABLE HELPERS
-    declareVariable(name, type) {
+    declareVariable(name, type, line, column) {
         const currentScope = this.symbolTableStack[this.symbolTableStack.length - 1];
         if (currentScope.has(name))
             return false;
-        currentScope.set(name, type);
+        const info = {
+            name,
+            type,
+            line,
+            column,
+            scopeLevel: this.symbolTableStack.length - 1,
+        };
+        currentScope.set(name, info);
+        this.symbols.push(info);
         return true;
     }
     lookupVariable(name) {
         for (let i = this.symbolTableStack.length - 1; i >= 0; i--) {
             const scope = this.symbolTableStack[i];
-            if (scope.has(name))
+            if (scope.has(name)) {
                 return scope.get(name);
+            }
         }
         return undefined;
+    }
+    displaySymbolTable() {
+        const output = document.getElementById("output");
+        if (!output)
+            return;
+        const label = document.createElement("h3");
+        label.textContent = "Symbol Table";
+        label.style.marginTop = "20px";
+        const table = document.createElement("table");
+        table.innerHTML = `
+      <thead><tr><th>Name</th><th>Type</th><th>Line</th><th>Column</th><th>Scope Level</th></tr></thead>
+      <tbody>
+        ${this.symbols
+            .map((sym) => `
+          <tr>
+            <td>${sym.name}</td>
+            <td>${sym.type}</td>
+            <td>${sym.line}</td>
+            <td>${sym.column}</td>
+            <td>${sym.scopeLevel}</td>
+          </tr>`)
+            .join("")}
+      </tbody>`;
+        table.classList.add("table", "table-striped", "table-bordered");
+        output.appendChild(label);
+        output.appendChild(table);
     }
 }
 //# sourceMappingURL=semanticAnalyzer.js.map

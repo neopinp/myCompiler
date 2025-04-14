@@ -1,21 +1,36 @@
 import { logInfo, logError } from "./utils.js";
 import { ASTNode } from "./ast.js";
 
+interface SymbolInfo {
+  name: string;
+  type: string;
+  line: number;
+  column: number;
+  scopeLevel: number;
+}
+
 export class SemanticAnalyzer {
-  symbolTableStack: Map<string, string>[];
+  symbolTableStack: Map<string, SymbolInfo>[];
   errors: string[];
+  symbols: SymbolInfo[]; // Flat list for display
 
   constructor(private ast: ASTNode) {
     this.symbolTableStack = [new Map()];
     this.errors = [];
+    this.symbols = [];
   }
 
   analyze() {
     this.visit(this.ast);
     this.reportErrors();
+    this.displaySymbolTable();
   }
 
   visit(node: ASTNode): string | void {
+    if (!node) {
+      this.reportError("Tried to visit an undefined node.");
+      return;
+    }
     switch (node.name) {
       case "Block":
         this.enterScope();
@@ -39,28 +54,24 @@ export class SemanticAnalyzer {
         return "string";
       case "Identifier": {
         const varName = node.value ?? node.name;
-        const varType = this.lookupVariable(varName);
-        if (!varType) {
+        const symbol = this.lookupVariable(varName);
+        if (!symbol) {
           this.reportError(`Undeclared Identifier '${varName}'.`);
           return "undefined";
         }
-        return varType;
+        return symbol.type;
       }
+
       case "If":
       case "While": {
-        const [condition, block] = node.children;
-        const condType = this.visit(condition);
-        if (condType !== "boolean") {
-          this.reportError(
-            `${node.name} condition must be boolean, got '${condType}' instead.`,
-            condition.line,
-            condition.column
-          );
-        }
-        this.visit(block); // Block already triggers enter/exitScope
+        this.handleWhile(node); 
         break;
       }
 
+      case "If":
+      case "While": {
+        this.handleWhile(node);
+      }
       default:
         node.children.forEach((child) => this.visit(child));
         break;
@@ -71,12 +82,13 @@ export class SemanticAnalyzer {
     const [typeNode, idNode] = node.children;
     const varType = typeNode.name;
     const varName = idNode.value ?? idNode.name;
+    const { line, column } = idNode;
 
-    if (!this.declareVariable(varName, varType)) {
+    if (!this.declareVariable(varName, varType, line, column)) {
       this.reportError(
         `Variable '${varName}' already declared in this scope.`,
-        node.line,
-        node.column
+        line,
+        column
       );
     }
   }
@@ -106,7 +118,7 @@ export class SemanticAnalyzer {
       return;
     }
 
-    if (actualType && expectedType !== actualType) {
+    if (actualType && expectedType?.type !== actualType) {
       this.reportError(
         `Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`,
         node.line,
@@ -125,6 +137,29 @@ export class SemanticAnalyzer {
       );
     }
   }
+  handleWhile(node: ASTNode) {
+    const condExpr = node.children[0];
+    const bodyBlock = node.children[1];
+
+    if (!condExpr || !bodyBlock) {
+      this.reportError("Bad While Loop.", node.line, node.column);
+      return;
+    }
+
+    const condType = this.visit(condExpr);
+    if (condType !== "boolean") {
+      this.reportError(
+        "While condition must evaluate to a boolean.",
+        condExpr.line,
+        condExpr.column
+      );
+    }
+
+    this.enterScope();
+    this.visit(bodyBlock);
+    this.exitScope();
+  }
+
   reportError(message: string, line = 0, column = 0) {
     logError(message, line, column, "SemanticAnalyzer");
     this.errors.push(message);
@@ -146,18 +181,66 @@ export class SemanticAnalyzer {
   }
 
   // VARIABLE HELPERS
-  declareVariable(name: string, type: string): boolean {
+  declareVariable(
+    name: string,
+    type: string,
+    line: number,
+    column: number
+  ): boolean {
     const currentScope =
       this.symbolTableStack[this.symbolTableStack.length - 1];
     if (currentScope.has(name)) return false;
-    currentScope.set(name, type);
+
+    const info: SymbolInfo = {
+      name,
+      type,
+      line,
+      column,
+      scopeLevel: this.symbolTableStack.length - 1,
+    };
+
+    currentScope.set(name, info);
+    this.symbols.push(info);
     return true;
   }
-  lookupVariable(name: string): string | undefined {
+  lookupVariable(name: string): SymbolInfo | undefined {
     for (let i = this.symbolTableStack.length - 1; i >= 0; i--) {
       const scope = this.symbolTableStack[i];
-      if (scope.has(name)) return scope.get(name);
+      if (scope.has(name)) {
+        return scope.get(name);
+      }
     }
     return undefined;
+  }
+
+  displaySymbolTable() {
+    const output = document.getElementById("output");
+    if (!output) return;
+
+    const label = document.createElement("h3");
+    label.textContent = "Symbol Table";
+    label.style.marginTop = "20px";
+
+    const table = document.createElement("table");
+    table.innerHTML = `
+      <thead><tr><th>Name</th><th>Type</th><th>Line</th><th>Column</th><th>Scope Level</th></tr></thead>
+      <tbody>
+        ${this.symbols
+          .map(
+            (sym) => `
+          <tr>
+            <td>${sym.name}</td>
+            <td>${sym.type}</td>
+            <td>${sym.line}</td>
+            <td>${sym.column}</td>
+            <td>${sym.scopeLevel}</td>
+          </tr>`
+          )
+          .join("")}
+      </tbody>`;
+
+    table.classList.add("table", "table-striped", "table-bordered");
+    output.appendChild(label);
+    output.appendChild(table);
   }
 }

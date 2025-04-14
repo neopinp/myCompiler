@@ -45,7 +45,6 @@ export class CST {
         cstTitle.textContent = "Concrete Syntax Tree (CST)";
         outputElement.appendChild(cstTitle);
         outputElement.appendChild(treeHTML);
-        // Add a visual break before AST appears
         const separator = document.createElement("hr");
         outputElement.appendChild(separator);
     }

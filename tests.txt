@@ -208,3 +208,16 @@ $
 
 
 
+If Statements 
+--------------------------------
+{
+  boolean b
+  b = true
+  if (b) {
+    print(b)
+  }
+}
+$
+
+
+

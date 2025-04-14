@@ -1,4 +1,4 @@
-import { Token } from "./token.js";
+import { Token, TokenType } from "./token.js";
 import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
@@ -73,6 +73,7 @@ export class Parser {
         logInfo(`SEMANTIC - Starting Semantic Analysis`, "SemanticAnalyzer");
         const analyzer = new SemanticAnalyzer(root);
         analyzer.analyze();
+        
       } else {
         logError(
           "Semantic Analysis skipped: AST root is null.",
@@ -284,7 +285,9 @@ export class Parser {
     if (this.match("IF")) {
       if (this.match("LPAREN")) {
         this.parseExpr();
+        this.match(TokenType.RPAREN);
         this.parseBlock();
+
       } else {
         this.reportError("Expected [LPAREN] after IF", "Parser");
       }
