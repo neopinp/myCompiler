@@ -68,12 +68,16 @@ export class ASTBuilder {
                     const value = child.name.split("] ")[1];
                     return new ASTNode("BooleanExpr", value);
                 }
-                if (child.name.startsWith("[ID]")) {
-                    const value = child.name.split("] ")[1];
+                if (child.name === "ID") {
+                    const token = child.children.find((c) => c.name.startsWith("[ID]"));
+                    const value = token ? token.name.split("] ")[1] : "???";
                     return new ASTNode("Identifier", value);
                 }
+                if (child.name.startsWith("[ID]")) {
+                    return new ASTNode("Identifier", child.name.split("] ")[1]);
+                }
                 if (child.name === "StringExpr") {
-                    return this.walk(child); // ✅ handled below
+                    return this.walk(child);
                 }
                 return null;
             }

@@ -71,6 +71,22 @@
           <button class="dropdown-item" data-value="case17">
             Mismatched Assignment
           </button>
+          <button class="dropdown-item" data-value="case18">
+            Boolean with Print
+          </button>
+          <button class="dropdown-item" data-value="case19">
+            Redundant Declaration
+          </button>
+          <button class="dropdown-item" data-value="case20">
+            Assignment to Undeclared Var
+          </button>
+          <button class="dropdown-item" data-value="case21">Empty Block</button>
+          <button class="dropdown-item" data-value="case22">
+            Valid Int Usage
+          </button>
+          <button class="dropdown-item" data-value="case23">
+            Multi-Type, Multi-Statement Program
+          </button>
         </div>
       </div>
 
@@ -203,6 +219,42 @@ $`,
         case17: `{
   boolean b
   b = 1
+}
+$`,
+        case18: `{
+  boolean b
+  b = true
+  print(b)
+}
+$`,
+        case19: `{
+  int x
+  int x
+}
+$`,
+        case20: `{
+  y = 1
+}
+$`,
+        case21: `{
+}
+$`,
+        case22: `{
+  int a
+  a = 1
+  print(a)
+}
+$`,
+        case23: `{
+  int i
+  string s
+  boolean b
+  i = 1
+  s = "abc"
+  b = false
+  print(i)
+  print(s)
+  print(b)
 }
 $`,
       };
