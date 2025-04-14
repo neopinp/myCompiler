@@ -87,6 +87,9 @@
           <button class="dropdown-item" data-value="case23">
             Multi-Type, Multi-Statement Program
           </button>
+          <button class="dropdown-item" data-value="case24">
+            Global Scope Checking
+          </button>
         </div>
       </div>
 
@@ -257,6 +260,15 @@ $`,
   print(b)
 }
 $`,
+        case24: `{
+  {
+    int x
+    x = 1
+  }
+  print(x) 
+}
+$
+`,
       };
 
       // Handle dropdown item selection
