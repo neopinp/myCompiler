@@ -145,7 +145,7 @@ Boolean Logic with print *****
 }
 $
 --------------------------------------
-Redundant Declaration
+Redundant Declaration ****
 -------------------------------
 {
   int x
@@ -153,13 +153,12 @@ Redundant Declaration
 }
 $
 
-ASsignment to Undeclared Variable
+ASsignment to Undeclared Variable ******
 -------------------------------
 {
   y = 10
 }
 $
-
 
 Empty Block 
 ----------------------------------
@@ -202,6 +201,10 @@ Mismatched Boolean Expression
 }
 $
 
+{
+  x = 2     
+}
+$
 
 
 

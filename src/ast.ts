@@ -1,12 +1,15 @@
 export class ASTNode {
   name: string;
-  children: ASTNode[];
   value?: string;
+  children: ASTNode[] = [];
+  line: number;
+  column: number;
 
-  constructor(name: string, value?: string) {
+  constructor(name: string, value?: string, line = 0, column = 0) {
     this.name = name;
-    this.children = [];
     this.value = value;
+    this.line = line;
+    this.column = column;
   }
 }
 

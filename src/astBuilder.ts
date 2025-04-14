@@ -38,7 +38,6 @@ export class ASTBuilder {
         for (const child of cstNode.children) {
           const result = this.walk(child);
           if (result) {
-            // flatten "Flat" wrapper from StatementList
             if (result.name === "Flat") {
               block.children.push(...result.children);
             } else {
@@ -69,12 +68,12 @@ export class ASTBuilder {
           child.name === "BooleanExpr" ||
           child.name === "StringExpr"
         ) {
-          return this.walk(child); // ✅ recurse into the sub-expression
+          return this.walk(child); 
         }
 
         if (child.name.startsWith("[DIGIT]")) {
           const value = child.name.split("] ")[1];
-          return new ASTNode("IntExpr", value); // fallback (rare)
+          return new ASTNode("IntExpr", value);
         }
 
         if (child.name.startsWith("[BOOLEAN_LITERAL]")) {
