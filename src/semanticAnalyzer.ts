@@ -46,6 +46,20 @@ export class SemanticAnalyzer {
         }
         return varType;
       }
+      case "If":
+      case "While": {
+        const [condition, block] = node.children;
+        const condType = this.visit(condition);
+        if (condType !== "boolean") {
+          this.reportError(
+            `${node.name} condition must be boolean, got '${condType}' instead.`,
+            condition.line,
+            condition.column
+          );
+        }
+        this.visit(block); // Block already triggers enter/exitScope
+        break;
+      }
 
       default:
         node.children.forEach((child) => this.visit(child));
@@ -59,7 +73,11 @@ export class SemanticAnalyzer {
     const varName = idNode.value ?? idNode.name;
 
     if (!this.declareVariable(varName, varType)) {
-      this.reportError(`Variable '${varName}' already declared in this scope.`, node.line, node.column);
+      this.reportError(
+        `Variable '${varName}' already declared in this scope.`,
+        node.line,
+        node.column
+      );
     }
   }
 
@@ -68,7 +86,11 @@ export class SemanticAnalyzer {
     const varName = idNode?.value ?? idNode?.name ?? "???";
 
     if (!exprNode) {
-      this.reportError(`Assignment to '${varName}' is missing an expression.`, node.line, node.column);
+      this.reportError(
+        `Assignment to '${varName}' is missing an expression.`,
+        node.line,
+        node.column
+      );
       return;
     }
 
@@ -76,13 +98,19 @@ export class SemanticAnalyzer {
     const actualType = this.visit(exprNode);
 
     if (!expectedType) {
-      this.reportError(`Assignment to undeclared variable '${varName}'. `, node.line, node.column);
+      this.reportError(
+        `Assignment to undeclared variable '${varName}'. `,
+        node.line,
+        node.column
+      );
       return;
     }
 
     if (actualType && expectedType !== actualType) {
       this.reportError(
-        `Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`, node.line, node.column
+        `Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`,
+        node.line,
+        node.column
       );
     }
   }
@@ -90,7 +118,11 @@ export class SemanticAnalyzer {
   handlePrint(node: ASTNode) {
     const exprType = this.visit(node.children[0]);
     if (!exprType) {
-      this.reportError("Print statement has invalid or undeclared expression.", node.line, node.column);
+      this.reportError(
+        "Print statement has invalid or undeclared expression.",
+        node.line,
+        node.column
+      );
     }
   }
   reportError(message: string, line = 0, column = 0) {

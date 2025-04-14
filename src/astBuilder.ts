@@ -58,6 +58,25 @@ export class ASTBuilder {
         }
         return null;
       }
+      case "IfStatement": {
+        const [boolExprCST, blockCST] = cstNode.children;
+        const ifNode = new ASTNode("If", undefined);
+        const boolExpr = this.walk(boolExprCST);
+        const block = this.walk(blockCST);
+        if (boolExpr) ifNode.children.push(boolExpr);
+        if (block) ifNode.children.push(block);
+        return ifNode;
+      }
+
+      case "WhileStatement": {
+        const [boolExprCST, blockCST] = cstNode.children;
+        const whileNode = new ASTNode("While", undefined);
+        const boolExpr = this.walk(boolExprCST);
+        const block = this.walk(blockCST);
+        if (boolExpr) whileNode.children.push(boolExpr);
+        if (block) whileNode.children.push(block);
+        return whileNode;
+      }
 
       case "Expr": {
         const child = cstNode.children[0];
@@ -68,7 +87,7 @@ export class ASTBuilder {
           child.name === "BooleanExpr" ||
           child.name === "StringExpr"
         ) {
-          return this.walk(child); 
+          return this.walk(child);
         }
 
         if (child.name.startsWith("[DIGIT]")) {
