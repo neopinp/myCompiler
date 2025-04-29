@@ -1,5 +1,7 @@
 import { logInfo, logError } from "./utils.js";
 import { ASTNode } from "./ast.js";
+import { appendPhaseSeparator } from "./utils.js"; // make sure you import it!
+
 
 interface SymbolInfo {
   name: string;
@@ -7,12 +9,13 @@ interface SymbolInfo {
   line: number;
   column: number;
   scopeLevel: number;
+
 }
 
 export class SemanticAnalyzer {
   symbolTableStack: Map<string, SymbolInfo>[];
   errors: string[];
-  symbols: SymbolInfo[]; // Flat list for display
+  symbols: SymbolInfo[]; 
 
   constructor(private ast: ASTNode) {
     this.symbolTableStack = [new Map()];
@@ -215,7 +218,9 @@ export class SemanticAnalyzer {
 
   displaySymbolTable() {
     const output = document.getElementById("output");
+    var programID = 0;
     if (!output) return;
+    
 
     const label = document.createElement("h3");
     label.textContent = "Symbol Table";
@@ -242,5 +247,8 @@ export class SemanticAnalyzer {
     table.classList.add("table", "table-striped", "table-bordered");
     output.appendChild(label);
     output.appendChild(table);
+    appendPhaseSeparator();
+    programID++;
+
   }
 }

@@ -45,8 +45,6 @@ export class CST {
         cstTitle.textContent = "Concrete Syntax Tree (CST)";
         outputElement.appendChild(cstTitle);
         outputElement.appendChild(treeHTML);
-        const separator = document.createElement("hr");
-        outputElement.appendChild(separator);
     }
     generateHTML(node) {
         const li = document.createElement("li");

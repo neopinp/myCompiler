@@ -56,8 +56,7 @@ export class CST {
     outputElement.appendChild(cstTitle);
     outputElement.appendChild(treeHTML);
   
-    const separator = document.createElement("hr");
-    outputElement.appendChild(separator);
+
   }
   
   private generateHTML(node: CSTNode): HTMLElement {

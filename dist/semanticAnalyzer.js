@@ -1,9 +1,10 @@
 import { logInfo, logError } from "./utils.js";
+import { appendPhaseSeparator } from "./utils.js"; // make sure you import it!
 export class SemanticAnalyzer {
     ast;
     symbolTableStack;
     errors;
-    symbols; // Flat list for display
+    symbols;
     constructor(ast) {
         this.ast = ast;
         this.symbolTableStack = [new Map()];
@@ -154,6 +155,7 @@ export class SemanticAnalyzer {
     }
     displaySymbolTable() {
         const output = document.getElementById("output");
+        var programID = 0;
         if (!output)
             return;
         const label = document.createElement("h3");
@@ -177,6 +179,8 @@ export class SemanticAnalyzer {
         table.classList.add("table", "table-striped", "table-bordered");
         output.appendChild(label);
         output.appendChild(table);
+        appendPhaseSeparator();
+        programID++;
     }
 }
 //# sourceMappingURL=semanticAnalyzer.js.map
