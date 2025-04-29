@@ -1,17 +1,15 @@
-// BROWSER UI INTERACTIONS
 import { Lexer } from "./lexer.js";
 import { logInfo } from "./utils.js";
 import { Token } from "./token.js";
 import { Parser } from "./parser.js";
-import { logWarning } from "./utils.js";
 
 export function runCompiler(): void {
   const inputElement = document.getElementById(
     "sourceCode"
   ) as HTMLTextAreaElement;
-  const outputElement = document.getElementById("output") as HTMLElement;
-  const outputElement2 = document.getElementById("output2") as HTMLElement;
-  const cstOutputElement = document.getElementById("outputCST") as HTMLElement;
+  const outputElement = document.getElementById("output")!;
+  const outputElement2 = document.getElementById("output2")!;
+  const cstOutputElement = document.getElementById("outputCST");
 
   outputElement.innerHTML = "";
   outputElement2.innerHTML = "";
@@ -19,7 +17,6 @@ export function runCompiler(): void {
 
   const sourceCode = inputElement.value;
   logInfo("Lexer - Lexing Started...");
-
 
   const lexer = new Lexer(sourceCode);
   lexer.tokenize();
@@ -29,47 +26,22 @@ export function runCompiler(): void {
     return;
   }
 
-  const allTokens = lexer.getTokens();
-
   const programs: Token[][] = [];
   let currentProgram: Token[] = [];
 
-  for (const token of allTokens) {
+  for (const token of lexer.getTokens()) {
     currentProgram.push(token);
-
     if (token.type === "EOP") {
-      programs.push([...currentProgram]); 
+      programs.push([...currentProgram]);
       currentProgram = [];
     }
   }
 
-
-
-  let programID = 1;
-
-  for (const programTokens of programs) {
-    logInfo(`Parser - Parsing Program ${programID}...`);
-
-    const parser = new Parser(programTokens, programID);
-    const cst = parser.parse();
-
-    if (parser.errors.length === 0) {
-      logInfo(`Parser - Displaying CST for Program ${programID}`, "Parser");
-      if (cst) {
-        cst.display();
-      }
-    } else {
-      logInfo(
-        `Parser - Skipping CST display due to ${parser.errors.length} parser error(s).`,
-        "Parser"
-      );
-    }
-
-    programID++;
-  }
+  programs.forEach((tokens, index) => {
+    const parser = new Parser(tokens, index + 1);
+    parser.parse();
+  });
 }
-
-//  OUTPUT WARNINGS AND ERRORS
 export function reportWarningsandErrors(lexer: Lexer): void {
   // RETURN WARNINGS FIRST
   if (lexer.warnings.length === 0 && lexer.errors.length === 0) {

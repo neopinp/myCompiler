@@ -157,8 +157,8 @@ export class Lexer {
     Contains [a-z] and spaces
     */
     tokenizeString() {
-        let startColumn = this.column; // Capture starting column of the quote
-        let startline = this.line;
+        let startLine = this.line;
+        let startColumn = this.column;
         // Opening quote
         if (this.currentChar === '"') {
             this.addToken(TokenType.CHAR_LIST, this.column);
@@ -169,15 +169,19 @@ export class Lexer {
         }
         // Process each character inside the string
         while (this.currentChar !== '"' && this.currentChar !== "\0") {
+            // ❗ Reject newlines inside strings
+            if (this.currentChar === "\n") {
+                this.reportError(`Unterminated string literal - Multiple Lines (${startLine}:${startColumn})`, "Lexer");
+                return;
+            }
             if (/[a-z]/.test(this.currentChar)) {
-                // Assuming only lowercase characters are valid
                 this.addToken(TokenType.CHAR, this.column);
             }
-            else if (/\s/.test(this.currentChar)) {
+            else if (this.currentChar === " ") {
                 this.addToken(TokenType.SPACE, this.column);
             }
             else {
-                this.reportError(`Invalid character PID:${this.programID} [${this.currentChar}] in string`);
+                this.reportError(`Invalid character PID:${this.programID} [${this.currentChar}] in string`, "Lexer");
                 this.advance();
             }
         }
@@ -186,7 +190,7 @@ export class Lexer {
             this.addToken(TokenType.CHAR_LIST, this.column);
         }
         else {
-            this.reportError(`Missing closing quote for string PID:${this.programID}`);
+            this.reportError(`Missing closing quote for string PID:${this.programID}`, "Lexer");
         }
     }
     // Longest Match First - Check if there is a following '=' for "=="
@@ -216,14 +220,21 @@ export class Lexer {
         }
     }
     tokenizeNumber() {
-        let startColumn = this.column;
-        let number = "";
-        while (/\d/.test(this.currentChar)) {
-            number += this.currentChar;
+        const startColumn = this.column;
+        if (/\d/.test(this.currentChar)) {
+            const digit = this.currentChar;
             this.advance();
+            if (/\d/.test(this.currentChar)) {
+                this.reportError(`Invalid number – (0–9) are allowed`, "Lexer");
+                while (/\d/.test(this.currentChar)) {
+                    this.advance();
+                }
+            }
+            else {
+                this.tokens.push(new Token(TokenType.DIGIT, digit, this.line, startColumn));
+                logDebug(`${TokenType.DIGIT} [${digit}] | (${this.line}:${startColumn})`);
+            }
         }
-        this.tokens.push(new Token(TokenType.DIGIT, number, this.line, startColumn));
-        logDebug(`${TokenType.DIGIT} [${number}] | (${this.line}:${startColumn})`);
     }
     tokenizeEOP() {
         this.addToken(TokenType.EOP, this.column);

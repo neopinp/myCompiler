@@ -1,7 +1,11 @@
-import { Token } from "./token.js";
+import { Token, TokenType } from "./token.js";
 import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
+import { ASTBuilder } from "./astBuilder.js";
+import { AST } from "./ast.js";
+import { SemanticAnalyzer } from "./semanticAnalyzer.js";
+
 
 export class Parser {
   private tokens: Token[];
@@ -51,19 +55,38 @@ export class Parser {
 
   public parse(): CST | null {
     logInfo(`Parsing Program ${this.programID}`, "Parser");
-    logInfo(`parse()`, "Parser");
-
     this.parseProgram();
     logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
+
     if (this.errors.length === 0) {
       logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
       this.cst.display();
-      return this.cst;
-    } else {
-      logInfo(`CST Terminated\n`, "Parser");
+
+      const astBuilder = new ASTBuilder();
+      const ast: AST = astBuilder.build(this.cst.getRoot());
+
+      logInfo(`AST - Displaying AST for Program ${this.programID}`, "Parser");
+      ast.display();
+
+      const root = ast.getRoot();
+      if (root) {
+        logInfo(`SEMANTIC - Starting Semantic Analysis`, "SemanticAnalyzer");
+        const analyzer = new SemanticAnalyzer(root);
+        analyzer.analyze();
+        
+      } else {
+        logError(
+          "Semantic Analysis skipped: AST root is null.",
+          0,
+          0,
+          "SemanticAnalyzer"
+        );
+      }
       return null;
     }
+    return this.cst;
   }
+
   private parseProgram(): void {
     logInfo(`parseProgram()`, "Parser");
 
@@ -104,6 +127,7 @@ export class Parser {
       this.parseStatement();
       this.parseStatementList();
     }
+
     this.cst.endNonLeafNode();
   }
 
@@ -138,31 +162,56 @@ export class Parser {
     logInfo(`parsePrintStatemnt()`, "Parser");
 
     if (this.match("PRINT")) {
-      if (this.match("L-PAREN")) {
+      if (this.match("LPAREN")) {
         this.parseExpr();
-        this.match("R-PAREN");
+
+        if (!this.match("RPAREN")) {
+          this.reportError(`Expected [RPAREN] to close print()`, "Parser");
+        }
       } else {
-        this.reportError(`Expeceted [)] after print`, "Parser");
+        this.reportError(`Expected [LPAREN] after print`, "Parser");
       }
     } else {
       this.reportError(`Expected [PRINT] Keyword`, "Parser");
     }
+
     this.cst.endNonLeafNode();
   }
+
   private parseExpr(): void {
     this.cst.startNonLeafNode("Expr");
     logInfo(`parseExpr()`, "Parser");
 
     const tokenType = this.currentToken.type;
 
-    if (tokenType === "DIGIT") {
+    if (tokenType === "LPAREN") {
+      this.match("LPAREN");
+      this.parseExpr();
+
+      if (this.currentToken.type === "BOOL_OP") {
+        this.match("BOOL_OP");
+        this.parseExpr();
+      }
+
+      if (!this.match("RPAREN")) {
+        this.reportError("Expected [RPAREN] to close parenthesis", "Parser");
+      }
+    } else if (tokenType === "DIGIT") {
       this.parseIntExpr();
     } else if (tokenType === "CHAR_LIST") {
       this.parseStringExpr();
     } else if (tokenType === "BOOLEAN_LITERAL") {
-      this.parseBooleanExpr();
+      this.match("BOOLEAN_LITERAL");
+      if (this.currentToken.type === "BOOL_OP") {
+        this.match("BOOL_OP");
+        this.parseExpr();
+      }
     } else if (tokenType === "ID") {
       this.parseID();
+      if (this.currentToken.type === "BOOL_OP") {
+        this.match("BOOL_OP");
+        this.parseExpr();
+      }
     } else {
       this.reportError(
         `Unexpected Token [${this.currentToken.value}] in expression`,
@@ -170,6 +219,7 @@ export class Parser {
       );
       this.advance();
     }
+
     this.cst.endNonLeafNode();
   }
 
@@ -191,15 +241,12 @@ export class Parser {
     logInfo("parseStringExpr()", "Parser");
 
     if (this.match("CHAR_LIST")) {
-      while (
-        this.currentToken.type === "CHAR" ||
-        this.currentToken.type === "SPACE"
-      ) {
+      while (["CHAR", "SPACE"].includes(this.currentToken.type)) {
         this.match(this.currentToken.type);
       }
-      this.match("CHAR_LIST");
-    } else {
-      this.reportError('Expected ["] at start of StringExpr', "Parser");
+      if (!this.match("CHAR_LIST")) {
+        this.reportError(`Expected closing ["] for string`, "Parser");
+      }
     }
 
     this.cst.endNonLeafNode();
@@ -208,15 +255,14 @@ export class Parser {
   private parseBooleanExpr(): void {
     this.cst.startNonLeafNode("BooleanExpr");
 
-    // Peek at the token type before matching
-    if (this.currentToken.type === "L-PAREN") {
-      this.match("L-PAREN");
+    if (this.currentToken.type === "LPAREN") {
+      this.match("LPAREN");
       this.parseExpr();
       this.match("BOOL_OP");
       this.parseExpr();
       this.match("RPAREN");
     } else if (this.currentToken.type === "BOOLEAN_LITERAL") {
-      this.match("BOOLEAN_LITERAL"); // this will now actually match true/false
+      this.match("BOOLEAN_LITERAL");
     } else {
       this.reportError(`Invalid BooleanExpr`, "Parser");
     }
@@ -232,32 +278,45 @@ export class Parser {
     }
     this.cst.endNonLeafNode();
   }
-
   private parseIfStatement(): void {
-    this.cst.startNonLeafNode("IF");
+    this.cst.startNonLeafNode("IfStatement");
     logInfo(`parseIfStatement()`, "Parser");
+
     if (this.match("IF")) {
-      this.parseBooleanExpr();
-      this.parseBlock();
-    } else {
-      this.reportError(
-        `Expected [IF] Keyword at start of IfStatement`,
-        "Parser"
-      );
+      if (this.match("LPAREN")) {
+        this.parseExpr();
+        this.match(TokenType.RPAREN);
+        this.parseBlock();
+
+      } else {
+        this.reportError("Expected [LPAREN] after IF", "Parser");
+      }
     }
+
     this.cst.endNonLeafNode();
   }
+
   private parseWhileStatement(): void {
-    this.cst.startNonLeafNode("WHILE");
+    this.cst.startNonLeafNode("WhileStatement");
+    logInfo(`parseWhileStatement()`, "Parser");
+
     if (this.match("WHILE")) {
-      this.parseBooleanExpr();
-      this.parseBlock();
-    } else {
-      this.reportError(
-        `Expected [WHILE] Keyword at start of WhileStatement`,
-        "Parser"
-      );
+      if (this.match("LPAREN")) {
+        this.parseExpr();
+
+        if (!this.match("RPAREN")) {
+          this.reportError(
+            "Expected [RPAREN] to close WHILE condition",
+            "Parser"
+          );
+        }
+
+        this.parseBlock();
+      } else {
+        this.reportError("Expected [LPAREN] after WHILE", "Parser");
+      }
     }
+
     this.cst.endNonLeafNode();
   }
 
