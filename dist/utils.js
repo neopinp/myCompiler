@@ -43,4 +43,15 @@ export function logToErrors(level, message, source = "Lexer") {
         outputElement.innerHTML += `<span class="${cssClass}">${level} ${source} - ${message}</span><br>`;
     }
 }
+export function appendPhaseSeparator() {
+    const outputElement = document.getElementById("output");
+    if (!outputElement) {
+        console.error("Output element not found!");
+        return;
+    }
+    const phaseTitle = document.createElement("h2");
+    outputElement.appendChild(phaseTitle);
+    const separator = document.createElement("hr");
+    outputElement.appendChild(separator);
+}
 //# sourceMappingURL=utils.js.map

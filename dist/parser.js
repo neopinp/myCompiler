@@ -40,13 +40,13 @@ export class Parser {
     parse() {
         logInfo(`Parsing Program ${this.programID}`, "Parser");
         this.parseProgram();
-        logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
+        logInfo(`Parsing Complete with: ${this.errors.length} errors\n`, "Parser");
         if (this.errors.length === 0) {
-            logInfo(`Displaying CST for Program ${this.programID}\n`, "Parser");
+            logInfo(`DISPLAYING CST FOR PROGRAM ${this.programID}\n`, "Parser");
             this.cst.display();
             const astBuilder = new ASTBuilder();
             const ast = astBuilder.build(this.cst.getRoot());
-            logInfo(`AST - Displaying AST for Program ${this.programID}`, "Parser");
+            logInfo(`AST - DISPLAYING AST FOR PROGRAM ${this.programID}`, "Parser");
             ast.display();
             const root = ast.getRoot();
             if (root) {
