@@ -3,9 +3,9 @@ import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
 import { ASTBuilder } from "./astBuilder.js";
-import { AST } from "./ast.js";
+import { AST, ASTNode } from "./ast.js";
 import { SemanticAnalyzer } from "./semanticAnalyzer.js";
-
+import { CodeGenerator } from "./codegenerator.js";
 
 export class Parser {
   private tokens: Token[];
@@ -53,38 +53,33 @@ export class Parser {
     }
   }
 
-  public parse(): CST | null {
+  public parse(): ASTNode | null {
     logInfo(`Parsing Program ${this.programID}`, "Parser");
     this.parseProgram();
-    logInfo(`Parsing Complete with: ${this.errors.length} errors\n`, "Parser");
+    logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
 
-    if (this.errors.length === 0) {
-      logInfo(`DISPLAYING CST FOR PROGRAM ${this.programID}\n`, "Parser");
-      this.cst.display();
+    this.cst.display();
 
-      const astBuilder = new ASTBuilder();
-      const ast: AST = astBuilder.build(this.cst.getRoot());
+    const astBuilder = new ASTBuilder();
+    const ast: AST = astBuilder.build(this.cst.getRoot());
 
-      logInfo(`AST - DISPLAYING AST FOR PROGRAM ${this.programID}`, "Parser");
-      ast.display();
+    ast.display();
 
-      const root = ast.getRoot();
-      if (root) {
-        logInfo(`SEMANTIC - Starting Semantic Analysis`, "SemanticAnalyzer");
-        const analyzer = new SemanticAnalyzer(root);
-        analyzer.analyze();
-        
-      } else {
-        logError(
-          "Semantic Analysis skipped: AST root is null.",
-          0,
-          0,
-          "SemanticAnalyzer"
-        );
-      }
+    const root = ast.getRoot();
+    console.log("getRoot() returned:", root);
+
+    if (root) {
+      const analyzer = new SemanticAnalyzer(root);
+      analyzer.analyze();
+
+      const generator = new CodeGenerator(root, this.programID);
+      generator.generate();
+      console.log("Returning AST from parser");
+      return root;
+    } else {
+      logError("AST root was null", 0, 0, "Parser");
       return null;
     }
-    return this.cst;
   }
 
   private parseProgram(): void {
@@ -287,7 +282,6 @@ export class Parser {
         this.parseExpr();
         this.match(TokenType.RPAREN);
         this.parseBlock();
-
       } else {
         this.reportError("Expected [LPAREN] after IF", "Parser");
       }

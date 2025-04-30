@@ -108,6 +108,8 @@
       ></textarea>
       Warnings & Errors
       <div id="output2" rows="10" cols="80"></div>
+      <h2>Machine Code</h2>
+      <div id="codeOutput"></div>
       <button id="run-button">Compile</button>
     </div>
     <div class="rightSide">
@@ -312,7 +314,7 @@ $
         const sourceCode = document.getElementById("sourceCode");
 
         sourceCode.addEventListener("input", function () {
-          this.style.height = "auto"; 
+          this.style.height = "auto";
           this.style.height = Math.min(this.scrollHeight, 400) + "px";
         });
       });

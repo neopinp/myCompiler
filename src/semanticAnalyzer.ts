@@ -248,7 +248,6 @@ export class SemanticAnalyzer {
     output.appendChild(label);
     output.appendChild(table);
     appendPhaseSeparator();
-    programID++;
 
   }
 }
