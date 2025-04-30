@@ -1,7 +1,6 @@
 import { ASTNode } from "./ast.js";
 import { logDebug, logWarning } from "./utils.js";
 
-
 export class CodeGenerator {
   private code: string[] = Array(256).fill("00");
   private codePtr = 0;
@@ -19,7 +18,9 @@ export class CodeGenerator {
 
     if (!this.ast) {
       logWarning(
-        `CodeGenerator: AST is null for Program ${this.pid}`, 0 , 0,
+        `CodeGenerator: AST is null for Program ${this.pid}`,
+        0,
+        0,
         "CodeGen"
       );
       return;
@@ -61,6 +62,10 @@ export class CodeGenerator {
 
       case "BooleanExpr":
         this.handleBooleanExpr(node);
+        break;
+      case "IntExpr":
+        this.emit("A9");
+        this.emit(this.toHex(parseInt(node.value || "0")));
         break;
 
       default:
@@ -116,7 +121,7 @@ export class CodeGenerator {
       this.emit("01");
       this.emit("FF");
     } else {
-      logWarning(`Print of unsupported type: ${type}`,0,0, "CodeGen");
+      logWarning(`Print of unsupported type: ${type}`, 0, 0, "CodeGen");
     }
   }
 
@@ -154,7 +159,7 @@ export class CodeGenerator {
   private display(): void {
     const output = document.getElementById("codeOutput");
     if (!output) {
-      logWarning("codeOutput div not found", 0,0, "CodeGen");
+      logWarning("codeOutput div not found", 0, 0, "CodeGen");
       return;
     }
 
