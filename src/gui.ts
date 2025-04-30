@@ -11,13 +11,10 @@ export function runCompiler(): void {
   const outputElement = document.getElementById("output")!;
   const outputElement2 = document.getElementById("output2")!;
   const cstOutputElement = document.getElementById("outputCST");
-  const codeOutputElement = document.getElementById("codeOutput");
 
-  // Clear outputs
   outputElement.innerHTML = "";
   outputElement2.innerHTML = "";
   if (cstOutputElement) cstOutputElement.innerHTML = "";
-  if (codeOutputElement) codeOutputElement.innerHTML = "";
 
   const sourceCode = inputElement.value;
   logInfo("Lexer - Lexing Started...");
@@ -42,22 +39,8 @@ export function runCompiler(): void {
   }
 
   programs.forEach((tokens, index) => {
-    const pid = index + 1;
-    const parser = new Parser(tokens, pid);
-    console.log(`Parsing program ${pid}...`);
-
-    const astRoot = parser.parse();
-    console.log("AST returned:", astRoot);
-
-    if (astRoot && astRoot.children.length > 0) {
-      console.log("✅ AST root has children. Proceeding to Code Generation.");
-      const generator = new CodeGenerator(astRoot, pid);
-      generator.generate();
-    } else {
-      console.warn(
-        `⚠️ AST was empty for Program ${pid}. Skipping Code Generation.`
-      );
-    }
+    const parser = new Parser(tokens, index + 1);
+    parser.parse();
   });
 }
 
