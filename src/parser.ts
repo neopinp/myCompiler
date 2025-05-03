@@ -186,11 +186,14 @@ export class Parser {
     const tokenType = this.currentToken.type;
 
     if (tokenType === "LPAREN") {
-      this.match("LPAREN");
-      this.parseExpr();
 
-      if (this.currentToken.type === "BOOL_OP") {
-        this.match("BOOL_OP");
+      if (
+        this.tokens[this.currentIndex + 2] &&
+        this.tokens[this.currentIndex + 2].type === "BOOL_OP"
+      ) {
+        this.parseBooleanExpr();
+      } else {
+        this.match("LPAREN");
         this.parseExpr();
       }
 
