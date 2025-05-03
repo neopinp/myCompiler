@@ -72,12 +72,13 @@ export class Parser {
       const analyzer = new SemanticAnalyzer(root);
       analyzer.analyze();
 
-      if (this.errors.length === 0) {
+      if (analyzer.errors.length === 0) {
         const generator = new CodeGenerator(root, this.programID);
         generator.generate();
       } else {
         this.reportError(
-          `Semantic Analyzer Failed with [${this.errors.length}] Errors`
+          `Semantic Analyzer Failed with [${analyzer.errors.length}] Errors`,
+          "SemanticAnalyzer"
         );
       }
       console.log("Returning AST from parser");
@@ -186,16 +187,9 @@ export class Parser {
     const tokenType = this.currentToken.type;
 
     if (tokenType === "LPAREN") {
-      if (
-        this.tokens[this.currentIndex + 2] &&
-        this.tokens[this.currentIndex + 2].type === "BOOL_OP"
-      ) {
-        this.parseBooleanExpr();
-      } else {
-        this.match("LPAREN");
-        this.parseExpr();
-      }
-
+      // Handle (expr)
+      this.match("LPAREN");
+      this.parseExpr();
       if (!this.match("RPAREN")) {
         this.reportError("Expected [RPAREN] to close parenthesis", "Parser");
       }
@@ -207,19 +201,28 @@ export class Parser {
       this.match("BOOLEAN_LITERAL");
     } else if (tokenType === "ID") {
       this.parseID();
-      if (this.currentToken.type === "BOOL_OP") {
-        this.match("BOOL_OP");
-        this.parseExpr();
-      }
-    } else if (this.currentToken.type === "BOOL_OP") {
-      this.match("BOOL_OP");
-      this.parseExpr();
     } else {
       this.reportError(
         `Unexpected Token [${this.currentToken.value}] in expression`,
         "Parser"
       );
       this.advance();
+    }
+
+    // After first term, check for INT_OP or BOOL_OP
+    while (
+      this.currentToken.type === "INT_OP" ||
+      this.currentToken.type === "BOOL_OP"
+    ) {
+      const opType = this.currentToken.type;
+
+      if (opType === "INT_OP") {
+        this.match("INT_OP");
+        this.parseExpr(); // recursively parse right side
+      } else if (opType === "BOOL_OP") {
+        this.match("BOOL_OP");
+        this.parseExpr(); // recursively parse right side
+      }
     }
 
     this.cst.endNonLeafNode();
@@ -249,25 +252,6 @@ export class Parser {
       if (!this.match("CHAR_LIST")) {
         this.reportError(`Expected closing ["] for string`, "Parser");
       }
-    }
-
-    this.cst.endNonLeafNode();
-  }
-
-  private parseBooleanExpr(): void {
-    this.cst.startNonLeafNode("BooleanExpr");
-
-    if (this.currentToken.type === "LPAREN") {
-      this.match("LPAREN");
-      this.parseExpr();
-      this.match("BOOL_OP");
-
-      this.parseExpr();
-      this.match("RPAREN");
-    } else if (this.currentToken.type === "BOOLEAN_LITERAL") {
-      this.match("BOOLEAN_LITERAL");
-    } else {
-      this.reportError(`Invalid BooleanExpr`, "Parser");
     }
 
     this.cst.endNonLeafNode();

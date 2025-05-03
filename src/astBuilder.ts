@@ -83,7 +83,6 @@ export class ASTBuilder {
       }
 
       case "WhileStatement": {
-
         const exprCST = cstNode.children.find((c) => c.name === "Expr");
         const blockCST = cstNode.children.find((c) => c.name === "Block");
 
@@ -98,44 +97,55 @@ export class ASTBuilder {
         return whileNode;
       }
       case "Expr": {
+        // Boolean expressions (already handled)
         if (
           cstNode.children.length === 3 &&
           cstNode.children[1].name.startsWith("[BOOL_OP]")
         ) {
           const left = this.walk(cstNode.children[0]);
-          const rawName = cstNode.children[1].name;
-          const op = rawName.includes("] ") ? rawName.split("] ")[1] : rawName;
+          const op = cstNode.children[1].name.split("] ")[1];
           const right = this.walk(cstNode.children[2]);
 
-
           const boolExpr = new ASTNode("BooleanExpr", op);
-
-          if (!left) {
-            reportError("ASTBuilder: Left side of BooleanExpr is null");
-          } else {
-            boolExpr.children.push(left);
-          }
-
-          if (!right) {
-            reportError("ASTBuilder: Right side of BooleanExpr is null");
-          } else {
-            boolExpr.children.push(right);
-          }
-
+          if (left) boolExpr.children.push(left);
+          if (right) boolExpr.children.push(right);
           return boolExpr;
         }
 
+        // NEW: Arithmetic expressions (like a + 1)
+        if (
+          cstNode.children.length === 3 &&
+          cstNode.children[1].name.startsWith("[INT_OP]")
+        ) {
+          const left = this.walk(cstNode.children[0]);
+          const op = cstNode.children[1].name.split("] ")[1];
+          const right = this.walk(cstNode.children[2]);
+
+          const intExpr = new ASTNode("IntExpr", op);
+          if (left) intExpr.children.push(left);
+          if (right) intExpr.children.push(right);
+          return intExpr;
+        }
+
+        // Simple expressions (already handled)
         if (cstNode.children.length === 1) {
           const child = cstNode.children[0];
           return this.walk(child);
         }
 
+        // Default error
         reportError(
           `ASTBuilder: Unrecognized Expr structure (children: ${cstNode.children
             .map((c) => c.name)
             .join(", ")})`
         );
         return null;
+      }
+
+      case "[BOOLEAN_LITERAL] true":
+      case "[BOOLEAN_LITERAL] false": {
+        const value = cstNode.name.split("] ")[1];
+        return new ASTNode("BooleanLiteral", value);
       }
 
       case "IntExpr": {

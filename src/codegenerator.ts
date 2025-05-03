@@ -142,6 +142,12 @@ export class CodeGenerator {
       this.emit("A2");
       this.emit("01");
       this.emit("FF");
+    } else if (type === "BooleanLiteral") {
+      this.emit("A9");
+      this.emit(child.value === "true" ? "01" : "00");
+      this.emit("A2"); 
+      this.emit("01");
+      this.emit("FF"); 
     } else {
       logWarning(`Print of unsupported type: ${type}`, 0, 0, "CodeGen");
     }
@@ -195,7 +201,7 @@ export class CodeGenerator {
   }
 
   private handleBooleanExpr(node: ASTNode): void {
-    logInfo(`Handling BooleanExpr | ${node.value}`, "CodeGen");
+    logInfo(`Handling BooleanExpr [${node.value}]`, "CodeGen");
 
     const op = node.value; // '==' or '!='
     const leftChild = node.children[0];
@@ -253,11 +259,10 @@ export class CodeGenerator {
       this.staticLocations.get(tempVar)!.push(this.codePtr - 2);
     }
 
-
     if (op === "==") {
       this.emit("D0"); // BNE
     } else if (op === "!=") {
-      this.emit("F0"); // BEQ 
+      this.emit("F0"); // BEQ
     } else {
       logWarning(`Unsupported boolean operator: ${op}`, 0, 0, "CodeGen");
     }
@@ -276,8 +281,8 @@ export class CodeGenerator {
         .padStart(2, "0");
       this.heapPtr++;
     }
-    this.code[heapAddress--] = "00"; 
-    
+    this.code[heapAddress--] = "00";
+
     this.heapPtr++;
 
     const addrHex = this.toHex(heapAddress + 1);
@@ -367,11 +372,10 @@ export class CodeGenerator {
       return;
     }
 
-    output.innerText === '';
+    output.innerText === "";
 
     logInfo(`Displaying code for PID: ${this.pid}`, "CodeGen");
     logInfo(`Program ${this.pid} Complete\n`, "CodeGen");
-
 
     const section = document.createElement("div");
     section.style.marginTop = "1rem";
