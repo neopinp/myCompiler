@@ -186,7 +186,6 @@ export class Parser {
     const tokenType = this.currentToken.type;
 
     if (tokenType === "LPAREN") {
-
       if (
         this.tokens[this.currentIndex + 2] &&
         this.tokens[this.currentIndex + 2].type === "BOOL_OP"
@@ -206,16 +205,15 @@ export class Parser {
       this.parseStringExpr();
     } else if (tokenType === "BOOLEAN_LITERAL") {
       this.match("BOOLEAN_LITERAL");
-      if (this.currentToken.type === "BOOL_OP") {
-        this.match("BOOL_OP");
-        this.parseExpr();
-      }
     } else if (tokenType === "ID") {
       this.parseID();
       if (this.currentToken.type === "BOOL_OP") {
         this.match("BOOL_OP");
         this.parseExpr();
       }
+    } else if (this.currentToken.type === "BOOL_OP") {
+      this.match("BOOL_OP");
+      this.parseExpr();
     } else {
       this.reportError(
         `Unexpected Token [${this.currentToken.value}] in expression`,
@@ -263,6 +261,7 @@ export class Parser {
       this.match("LPAREN");
       this.parseExpr();
       this.match("BOOL_OP");
+
       this.parseExpr();
       this.match("RPAREN");
     } else if (this.currentToken.type === "BOOLEAN_LITERAL") {

@@ -38,7 +38,7 @@ export class CodeGenerator {
   }
 
   private visit(node: ASTNode): void {
-    logDebug(`Visiting node | [${node.name}: ${node.value ?? ""}]`, "CodeGen");
+    logDebug(`Visiting node | [${node.name}] ${node.value ?? ""}`, "CodeGen");
 
     switch (node.name) {
       case "Program":
@@ -149,7 +149,7 @@ export class CodeGenerator {
     const loopStart = this.codePtr;
 
     const condExpr = node.children[0];
-    const block = node.children[0];
+    const block = node.children[1];
 
     this.generateBooleanCompare(condExpr);
 
@@ -222,23 +222,56 @@ export class CodeGenerator {
 
   private generateBooleanCompare(node: ASTNode): void {
     logInfo("Generating boolean comparison...", "CodeGen");
-    const left = this.mangleVarName(node.children[0]);
-    const right = this.mangleVarName(node.children[1]);
 
-    this.emit("AE");
-    this.emit("XX");
-    this.emit("XX");
-    this.emit("EC");
-    this.emit("XX");
-    this.emit("XX");
+    const leftChild = node.children[0];
+    const rightChild = node.children[1];
+
+    if (!leftChild || !rightChild) {
+      console.error(
+        "generateBooleanCompare: missing left or right child",
+        node
+      );
+      return;
+    }
+
+    if (leftChild.name === "Identifier") {
+      const leftVar = this.mangleVarName(leftChild);
+      this.emit("AE");
+      this.emit("XX");
+      this.emit("XX");
+    } else if (leftChild.name === "IntExpr") {
+      this.emit("A2");
+      this.emit(this.toHex(parseInt(leftChild.value || "0")));
+    }
+
+    if (rightChild.name === "Identifier") {
+      const rightVar = this.mangleVarName(rightChild);
+      this.emit("EC");
+      this.emit("XX");
+      this.emit("XX");
+    } else if (rightChild.name === "IntExpr") {
+      this.emit("A9");
+      this.emit(this.toHex(parseInt(rightChild.value || "0")));
+      // add compare logic here if needed
+    }
   }
 
   private getNextStaticAddress(): number {
     return 0x2d + this.staticTable.size;
   }
-
-  private mangleVarName(node: ASTNode): string {
-    return `${node.value ?? node.name}@0`;
+  mangleVarName(node: ASTNode): string {
+    if (!node) {
+      throw new Error("mangleVarName received undefined node!");
+    }
+    if (node.name !== "Identifier") {
+      throw new Error(`mangleVarName expected Identifier, got ${node.name}`);
+    }
+    if (typeof node.value !== "string") {
+      throw new Error(
+        `mangleVarName: node.value is not string (got ${node.value})`
+      );
+    }
+    return `_T${node.value}`;
   }
 
   private toHex(n: number): string {

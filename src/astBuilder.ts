@@ -47,6 +47,15 @@ export class ASTBuilder {
         }
         return block;
       }
+      case "ID": {
+        const token = cstNode.children.find((c) => c.name.startsWith("[ID]"));
+        if (token) {
+          const value = token.name.split("] ")[1];
+          return new ASTNode("Identifier", value);
+        }
+        reportError("ASTBuilder: Missing [ID] token in ID node");
+        return new ASTNode("Identifier", "MISSING_ID");
+      }
 
       case "PrintStatement": {
         const exprCST = cstNode.children.find((child) => child.name === "Expr");
@@ -74,7 +83,7 @@ export class ASTBuilder {
       }
 
       case "WhileStatement": {
-        // [WHILE] while, [LPAREN] (, Expr, [RPAREN] ), Block
+
         const exprCST = cstNode.children.find((c) => c.name === "Expr");
         const blockCST = cstNode.children.find((c) => c.name === "Block");
 
@@ -88,43 +97,44 @@ export class ASTBuilder {
 
         return whileNode;
       }
-
       case "Expr": {
-        const child = cstNode.children[0];
-
-        // If Expr → IntExpr → [DIGIT] 1
         if (
-          child.name === "IntExpr" ||
-          child.name === "BooleanExpr" ||
-          child.name === "StringExpr"
+          cstNode.children.length === 3 &&
+          cstNode.children[1].name.startsWith("[BOOL_OP]")
         ) {
+          const left = this.walk(cstNode.children[0]);
+          const rawName = cstNode.children[1].name;
+          const op = rawName.includes("] ") ? rawName.split("] ")[1] : rawName;
+          const right = this.walk(cstNode.children[2]);
+
+
+          const boolExpr = new ASTNode("BooleanExpr", op);
+
+          if (!left) {
+            reportError("ASTBuilder: Left side of BooleanExpr is null");
+          } else {
+            boolExpr.children.push(left);
+          }
+
+          if (!right) {
+            reportError("ASTBuilder: Right side of BooleanExpr is null");
+          } else {
+            boolExpr.children.push(right);
+          }
+
+          return boolExpr;
+        }
+
+        if (cstNode.children.length === 1) {
+          const child = cstNode.children[0];
           return this.walk(child);
         }
 
-        if (child.name.startsWith("[DIGIT]")) {
-          const value = child.name.split("] ")[1];
-          return new ASTNode("IntExpr", value);
-        }
-
-        if (child.name.startsWith("[BOOLEAN_LITERAL]")) {
-          const value = child.name.split("] ")[1];
-          return new ASTNode("BooleanExpr", value);
-        }
-
-        if (child.name === "ID") {
-          const token = child.children.find((c) => c.name.startsWith("[ID]"));
-          const value = token ? token.name.split("] ")[1] : "???";
-          return new ASTNode("Identifier", value);
-        }
-
-        if (child.name.startsWith("[ID]")) {
-          return new ASTNode("Identifier", child.name.split("] ")[1]);
-        }
-
-        if (child.name === "StringExpr") {
-          return this.walk(child);
-        }
-
+        reportError(
+          `ASTBuilder: Unrecognized Expr structure (children: ${cstNode.children
+            .map((c) => c.name)
+            .join(", ")})`
+        );
         return null;
       }
 
@@ -136,6 +146,13 @@ export class ASTBuilder {
           const value = digitNode.name.split("] ")[1];
           return new ASTNode("IntExpr", value);
         }
+
+        const idNode = cstNode.children.find((c) => c.name.startsWith("[ID]"));
+        if (idNode) {
+          const value = idNode.name.split("] ")[1];
+          return new ASTNode("Identifier", value);
+        }
+
         return null;
       }
 
@@ -171,7 +188,7 @@ export class ASTBuilder {
         if (exprAST) {
           assignNode.children.push(exprAST);
         } else {
-          console.warn("ASTBuilder: exprAST is null in AssignmentStatement");
+          reportError("ASTBuilder: exprAST is null in AssignmentStatement");
         }
 
         return assignNode;
