@@ -17,7 +17,7 @@ export function runCompiler(): void {
   if (cstOutputElement) cstOutputElement.innerHTML = "";
 
   const sourceCode = inputElement.value;
-  logInfo("Lexer - Lexing Started...");
+  logInfo("Lexing Started...");
 
   const lexer = new Lexer(sourceCode);
   lexer.tokenize();

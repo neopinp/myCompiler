@@ -126,6 +126,11 @@ textarea {
   font-weight: bold;
 }
 
+.info.codegen {
+  color: purple;
+  font-weight: bold;
+}
+
 .debug {
   color: gray;
 }

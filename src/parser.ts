@@ -72,8 +72,14 @@ export class Parser {
       const analyzer = new SemanticAnalyzer(root);
       analyzer.analyze();
 
-      const generator = new CodeGenerator(root, this.programID);
-      generator.generate();
+      if (this.errors.length === 0) {
+        const generator = new CodeGenerator(root, this.programID);
+        generator.generate();
+      } else {
+        this.reportError(
+          `Semantic Analyzer Failed with [${this.errors.length}] Errors`
+        );
+      }
       console.log("Returning AST from parser");
       return root;
     } else {

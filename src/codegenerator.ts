@@ -1,5 +1,7 @@
+// codegenerator.ts
+
 import { ASTNode } from "./ast.js";
-import { logDebug, logWarning } from "./utils.js";
+import { logDebug, logInfo, logWarning } from "./utils.js";
 
 export class CodeGenerator {
   private code: string[] = Array(256).fill("00");
@@ -14,7 +16,7 @@ export class CodeGenerator {
   constructor(private ast: ASTNode, private pid: number) {}
 
   public generate(): void {
-    logDebug(`generate() called for Program ${this.pid}`, "CodeGen");
+    logInfo(`generate() | PID [${this.pid}]`, "CodeGen");
 
     if (!this.ast) {
       logWarning(
@@ -26,7 +28,7 @@ export class CodeGenerator {
       return;
     }
 
-    logDebug(`Starting Code Generation for Program ${this.pid}`, "CodeGen");
+    logInfo(`Starting Code Generation | PID [${this.pid}] `, "CodeGen");
     this.visit(this.ast);
     this.emit("00");
     logDebug("Starting Backpatching...", "CodeGen");
@@ -36,7 +38,7 @@ export class CodeGenerator {
   }
 
   private visit(node: ASTNode): void {
-    logDebug(`Visiting node: ${node.name} ${node.value ?? ""}`, "CodeGen");
+    logDebug(`Visiting node | [${node.name}: ${node.value ?? ""}]`, "CodeGen");
 
     switch (node.name) {
       case "Program":
@@ -59,6 +61,9 @@ export class CodeGenerator {
       case "If":
         this.handleIf(node);
         break;
+      case "While":
+        this.handleWhile(node);
+        break;
 
       case "BooleanExpr":
         this.handleBooleanExpr(node);
@@ -73,13 +78,8 @@ export class CodeGenerator {
     }
   }
 
-  private emit(byte: string): void {
-    logDebug(`Emitting byte: ${byte}`, "CodeGen");
-    this.code[this.codePtr++] = byte.toUpperCase().padStart(2, "0");
-  }
-
   private handleVarDecl(node: ASTNode) {
-    logDebug("Handling VarDecl", "CodeGen");
+    logInfo("Handling VarDecl", "CodeGen");
     const varName = this.mangleVarName(node.children[1]);
     const addr = this.getNextStaticAddress();
     this.staticTable.set(varName, addr);
@@ -92,7 +92,7 @@ export class CodeGenerator {
   }
 
   private handleAssignment(node: ASTNode) {
-    logDebug("Handling Assignment", "CodeGen");
+    logInfo("Handling Assignment", "CodeGen");
     const target = this.mangleVarName(node.children[0]);
     const expr = node.children[1];
 
@@ -103,7 +103,7 @@ export class CodeGenerator {
   }
 
   private handlePrint(node: ASTNode) {
-    logDebug("Handling Print", "CodeGen");
+    logInfo("Handling Print", "CodeGen");
     const child = node.children[0];
     const type = child.name;
 
@@ -126,7 +126,7 @@ export class CodeGenerator {
   }
 
   private handleIf(node: ASTNode) {
-    logDebug("Handling If Statement", "CodeGen");
+    logInfo("Handling If Statement", "CodeGen");
     const condExpr = node.children[0];
     const block = node.children[1];
 
@@ -143,8 +143,37 @@ export class CodeGenerator {
     this.jumpTable.set(jumpTemp, distance);
   }
 
+  private handleWhile(node: ASTNode) {
+    logInfo(`Handling While Statement`, "CodeGen");
+
+    const loopStart = this.codePtr;
+
+    const condExpr = node.children[0];
+    const block = node.children[0];
+
+    this.generateBooleanCompare(condExpr);
+
+    // BNE jump if condition is False
+    this.emit("D0");
+    const jumpTemp = `J${this.jumpCounter++}`;
+    this.emit(jumpTemp);
+
+    const jumpStart = this.codePtr;
+    this.visit(block);
+
+    // jump back to start of loop
+    this.emit("A2");
+    const backwardDistance = 256 - (this.codePtr + 2 - loopStart);
+    this.emit(this.toHex(backwardDistance));
+    this.emit("EC");
+
+    const jumpEnd = this.codePtr;
+    const distance = jumpEnd - jumpStart;
+    this.jumpTable.set(jumpTemp, distance);
+  }
+
   private handleBooleanExpr(node: ASTNode): void {
-    logDebug(`Handling BooleanExpr: ${node.value}`, "CodeGen");
+    logInfo(`Handling BooleanExpr: ${node.value}`, "CodeGen");
     if (node.value === "true") {
       this.emit("A9");
       this.emit("01");
@@ -156,27 +185,11 @@ export class CodeGenerator {
     }
   }
 
-  private display(): void {
-    const output = document.getElementById("codeOutput");
-    if (!output) {
-      logWarning("codeOutput div not found", 0, 0, "CodeGen");
-      return;
-    }
+  /* HELPER FUNCTIONS */
 
-    logDebug(`Displaying code for Program ${this.pid}`, "CodeGen");
-
-    const section = document.createElement("div");
-    section.style.marginTop = "1rem";
-
-    const label = document.createElement("h4");
-    label.textContent = `Program ${this.pid} Machine Code:`;
-    section.appendChild(label);
-
-    const pre = document.createElement("pre");
-    pre.textContent = this.code.slice(0, this.codePtr).join(" ");
-    section.appendChild(pre);
-
-    output.appendChild(section);
+  private emit(byte: string): void {
+    logDebug(`Emitting byte | [${byte}]`, "CodeGen");
+    this.code[this.codePtr++] = byte.toUpperCase().padStart(2, "0");
   }
 
   private backpatchStaticTable() {
@@ -208,7 +221,7 @@ export class CodeGenerator {
   }
 
   private generateBooleanCompare(node: ASTNode): void {
-    logDebug("Generating boolean comparison...", "CodeGen");
+    logInfo("Generating boolean comparison...", "CodeGen");
     const left = this.mangleVarName(node.children[0]);
     const right = this.mangleVarName(node.children[1]);
 
@@ -230,5 +243,27 @@ export class CodeGenerator {
 
   private toHex(n: number): string {
     return n.toString(16).padStart(2, "0").toUpperCase();
+  }
+  private display(): void {
+    const output = document.getElementById("codeOutput");
+    if (!output) {
+      logWarning("codeOutput div not found", 0, 0, "CodeGen");
+      return;
+    }
+
+    logDebug(`Displaying code for PID: ${this.pid}`, "CodeGen");
+
+    const section = document.createElement("div");
+    section.style.marginTop = "1rem";
+
+    const label = document.createElement("h4");
+    label.textContent = `Program ${this.pid} Machine Code:`;
+    section.appendChild(label);
+
+    const pre = document.createElement("pre");
+    pre.textContent = this.code.slice(0, this.codePtr).join(" ");
+    section.appendChild(pre);
+
+    output.appendChild(section);
   }
 }
