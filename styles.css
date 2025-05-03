@@ -106,6 +106,12 @@ textarea {
   background: #f8f9fa;
   color: black;
 }
+#codeOutput pre {
+  white-space: pre-wrap;
+  word-wrap: normal;
+  overflow-wrap: break-word;
+}
+
 
 .error {
   color: red;

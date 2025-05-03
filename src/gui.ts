@@ -1,7 +1,6 @@
 import { Lexer } from "./lexer.js";
 import { logInfo } from "./utils.js";
 import { Parser } from "./parser.js";
-import { CodeGenerator } from "./codegenerator.js";
 import { Token } from "./token.js";
 
 export function runCompiler(): void {
@@ -11,10 +10,12 @@ export function runCompiler(): void {
   const outputElement = document.getElementById("output")!;
   const outputElement2 = document.getElementById("output2")!;
   const cstOutputElement = document.getElementById("outputCST");
+  const codeGen = document.getElementById("codeOutput");
 
   outputElement.innerHTML = "";
   outputElement2.innerHTML = "";
   if (cstOutputElement) cstOutputElement.innerHTML = "";
+  if (codeGen) codeGen.innerHTML = "";
 
   const sourceCode = inputElement.value;
   logInfo("Lexing Started...");

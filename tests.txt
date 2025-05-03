@@ -220,6 +220,8 @@ If Statements
 $
 
 
+CODE GENERATION 
+
 While Boolean Compare 
 -----------------------------------------------------------
 {
