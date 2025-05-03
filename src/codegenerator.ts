@@ -6,13 +6,14 @@ import { logDebug, logInfo, logWarning } from "./utils.js";
 export class CodeGenerator {
   private code: string[] = Array(256).fill("00");
   private codePtr = 0;
-  private heapPtr = 0;
-
+  private heapPtr: number = 0xff; // Start heap at top (end) of memory
+  private heapTable: { [stringValue: string]: number } = {}; // avoid duplicate strings
   private staticTable: Map<string, number> = new Map();
   private staticLocations: Map<string, number[]> = new Map();
   private jumpTable: Map<string, number> = new Map();
   private tempVarCounter = 0;
   private jumpCounter = 0;
+  private labelCounter: number = 0;
 
   constructor(private ast: ASTNode, private pid: number) {}
 
@@ -145,9 +146,45 @@ export class CodeGenerator {
     } else if (type === "BooleanLiteral") {
       this.emit("A9");
       this.emit(child.value === "true" ? "01" : "00");
-      this.emit("A2"); 
+      this.emit("A2");
       this.emit("01");
-      this.emit("FF"); 
+      this.emit("FF");
+    } else if (type === "StringExpr") {
+      const stringValue = node.children[0].value ?? "";
+      const strAddr = this.allocateStringInHeap(stringValue);
+
+      const loopLabel = this.makeLabel();
+      const endLabel = this.makeLabel();
+
+      // Load start address into X
+      this.emit("A2");
+      this.emitByte(strAddr);
+
+      // Label: loop start
+      this.emitLabel(loopLabel);
+
+      // Load next char: LDA addr, X
+      this.emit("BD");
+      this.emitAddress(strAddr); // assumes BD addr, X reads heap
+
+      // Compare to 0 (null terminator)
+      this.emit("C9");
+      this.emitByte(0x00); // CMP #00
+      this.emit("F0");
+      this.emitJump(endLabel); // BEQ endLabel
+
+      // Print char
+      this.emit("A2");
+      this.emitByte(0x01); // load print syscall
+      this.emit("FF"); // system call
+
+      // Increment X
+      this.emit("E8"); // INX
+      this.emit("4C");
+      this.emitJump(loopLabel); // JMP loopLabel
+
+      // Label: loop end
+      this.emitLabel(endLabel);
     } else {
       logWarning(`Print of unsupported type: ${type}`, 0, 0, "CodeGen");
     }
@@ -319,6 +356,31 @@ export class CodeGenerator {
     logDebug(`Emitting byte | [${byte}]`, "CodeGen");
     this.code[this.codePtr++] = byte.toUpperCase().padStart(2, "0");
   }
+  private emitByte(value: number) {
+    this.emit(value.toString(16).padStart(2, "0").toUpperCase());
+  }
+
+  private emitAddress(addr: number) {
+    const lowByte = addr & 0xff;
+    const highByte = (addr >> 8) & 0xff;
+    this.emitByte(lowByte);
+    this.emitByte(highByte);
+  }
+
+  private makeLabel(): string {
+    return `LBL_${this.labelCounter++}`;
+  }
+
+  private emitLabel(label: string) {
+    // Optional: store position for backpatching if needed
+  }
+
+  private emitJump(label: string) {
+    // Reserve 2 bytes for jump (to be backpatched later)
+    this.emitByte(0x00);
+    this.emitByte(0x00);
+    // Track jump target in your jump table
+  }
 
   private backpatchJumpTable() {
     logInfo("Backpatching Jump Table...", "CodeGen");
@@ -389,5 +451,29 @@ export class CodeGenerator {
     section.appendChild(pre);
 
     output.appendChild(section);
+  }
+  private allocateStringInHeap(value: string): number {
+    // Check if already allocated
+    if (this.heapTable[value] !== undefined) {
+      return this.heapTable[value];
+    }
+
+    const startAddr = this.heapPtr - value.length;
+    for (let i = 0; i < value.length; i++) {
+      const charCode = value.charCodeAt(i);
+      this.emit("A9");
+      this.emitByte(charCode); // LDA #char
+      this.emit("8D");
+      this.emitAddress(startAddr + i); // STA addr
+    }
+    // Null terminator
+    this.emit("A9");
+    this.emitByte(0x00);
+    this.emit("8D");
+    this.emitAddress(startAddr + value.length);
+
+    this.heapPtr = startAddr - 1;
+    this.heapTable[value] = startAddr;
+    return startAddr;
   }
 }

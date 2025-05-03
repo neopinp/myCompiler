@@ -358,22 +358,41 @@ $`,
 
 
 `,
-        case33: `{ 
-  print(true) 
-} $
+        case33: ``,
+        case34: `{
+  int x
+  x = 1
+  if (x == 1) {
+    print(x)
+  }
+}
+$
+
+
+
+`,
+        case35: `{
+  int a
+  a = 3
+  while (a == 3) {
+    print(a)
+    a= 0
+  }
+}
+$
+
+
+
 
 
 `,
-        case34: `{ while (a != 0) { a = a - 1 } } $
+        case36: `{ b = a + 3 } $
 
 `,
-        case35: `{ b = a + 3 } $
+        case37: `{ print("hello") } $
 
 `,
-        case36: `{ print("hello") } $
-
-`,
-        case37: `{ int a
+        case38: `{ int a
   a = 3
   print(a)
   if (a == 3) {
