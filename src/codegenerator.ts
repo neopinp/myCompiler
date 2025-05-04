@@ -3,19 +3,48 @@
 import { ASTNode } from "./ast.js";
 import { logDebug, logInfo, logWarning } from "./utils.js";
 
+interface SymbolInfo {
+  name: string;
+  type: string;
+  line: number;
+  column: number;
+  scopeLevel: number;
+}
+
 export class CodeGenerator {
   private code: string[] = Array(256).fill("00");
   private codePtr = 0;
-  private heapPtr: number = 0xff; // Start heap at top (end) of memory
-  private heapTable: { [stringValue: string]: number } = {}; // avoid duplicate strings
+  private heapPtr: number = 0xff;
+  private heapTable: { [stringValue: string]: number } = {};
   private staticTable: Map<string, number> = new Map();
   private staticLocations: Map<string, number[]> = new Map();
-  private jumpTable: Map<string, number> = new Map();
+  private jumpTable: Map<string, number[]> = new Map();
   private tempVarCounter = 0;
   private jumpCounter = 0;
   private labelCounter: number = 0;
+  private labelAddresses: Map<string, number> = new Map();
+  private scopeStack: number[] = [];
+  private scopeDepth: number = 0;
 
-  constructor(private ast: ASTNode, private pid: number) {}
+  constructor(
+    private ast: ASTNode,
+    private pid: number,
+    private symbols: SymbolInfo[]
+  ) {}
+
+  enterScope(scopeID: number) {
+    this.scopeStack.push(scopeID);
+    logDebug(`Entered scope ${scopeID}`, "CodeGen");
+  }
+
+  exitScope() {
+    const popped = this.scopeStack.pop();
+    logDebug(`Exited scope ${popped}`, "CodeGen");
+  }
+
+  currentScope(): number {
+    return this.scopeStack[this.scopeStack.length - 1];
+  }
 
   public generate(): void {
     logInfo(`generate() | PID [${this.pid}]`, "CodeGen");
@@ -45,8 +74,12 @@ export class CodeGenerator {
     switch (node.name) {
       case "Program":
       case "Block":
+        const newScope = this.scopeStack.length; // new scope ID
+        this.enterScope(newScope);
         node.children.forEach((child) => this.visit(child));
+        this.exitScope();
         break;
+
       case "VarDecl":
         this.handleVarDecl(node);
         break;
@@ -83,40 +116,34 @@ export class CodeGenerator {
   }
 
   private handleVarDecl(node: ASTNode) {
-    logInfo("Handling VarDecl", "CodeGen");
-    const varName = this.mangleVarName(node.children[1]);
-    const addr = this.getNextStaticAddress();
-    this.staticTable.set(varName, addr);
+    const rawName = node.children[1].value;
+    if (!rawName) throw new Error("Expected identifier name but got undefined");
 
-    this.emit("A9"); // LDA #00
-    this.emit("00");
-    this.emit("8D"); // STA
-    this.emit("XX");
-    this.emit("XX");
+    const scopeLevel = this.currentScope();
+    const mangled = `_S${scopeLevel}_T${rawName}`;
 
-    if (!this.staticLocations.has(varName)) {
-      this.staticLocations.set(varName, []);
+    if (!this.staticTable.has(mangled)) {
+      const addr = this.getNextStaticAddress();
+      this.staticTable.set(mangled, addr);
     }
-    this.staticLocations.get(varName)!.push(this.codePtr - 2);
   }
 
   private handleAssignment(node: ASTNode) {
-    logInfo("Handling Assignment", "CodeGen");
+    const rawName = node.children[0].value;
+    if (!rawName) throw new Error("Expected identifier name but got undefined");
+    const resolved = this.lookupMangledVariable(rawName);
 
-    const targetVarNode = node.children[0];
-    const expr = node.children[1];
-    const varName = this.mangleVarName(targetVarNode);
-
-    this.visit(expr);
-
-    this.emit("8D"); // STA
-    this.emit("XX");
-    this.emit("XX");
-
-    if (!this.staticLocations.has(varName)) {
-      this.staticLocations.set(varName, []);
+    if (!resolved)
+      throw new Error(`Variable ${rawName} not found in symbol table`);
+    const { mangled } = resolved;
+    if (!this.staticTable.has(mangled)) {
+      const addr = this.getNextStaticAddress();
+      this.staticTable.set(mangled, addr);
     }
-    this.staticLocations.get(varName)!.push(this.codePtr - 2);
+
+    this.visit(node.children[1]);
+    this.emit("8D");
+    this.emitAddressPlaceholder(mangled);
   }
 
   private handlePrint(node: ASTNode) {
@@ -125,15 +152,21 @@ export class CodeGenerator {
     const type = child.name;
 
     if (type === "Identifier") {
-      const varName = this.mangleVarName(child);
-      this.emit("AC");
-      this.emit("XX");
-      this.emit("XX");
-
-      if (!this.staticLocations.has(varName)) {
-        this.staticLocations.set(varName, []);
+      const rawName = child.value;
+      if (rawName === undefined) {
+        throw new Error("Expected identifier name but got undefined");
       }
-      this.staticLocations.get(varName)!.push(this.codePtr - 2);
+
+      const resolved = this.lookupMangledVariable(rawName);
+
+      if (!resolved) {
+        logWarning(`Variable ${rawName} not declared`, 0, 0, "CodeGen");
+        return;
+      }
+      const { mangled } = resolved;
+
+      this.emit("AC");
+      this.emitAddressPlaceholder(mangled);
 
       this.emit("A2");
       this.emit("01");
@@ -160,14 +193,12 @@ export class CodeGenerator {
       this.emit("A2");
       this.emitByte(strAddr);
 
-      // Label: loop start
       this.emitLabel(loopLabel);
 
-      // Load next char: LDA addr, X
       this.emit("BD");
-      this.emitAddress(strAddr); // assumes BD addr, X reads heap
+      this.emitAddress(strAddr);
 
-      // Compare to 0 (null terminator)
+      // Compare to 0
       this.emit("C9");
       this.emitByte(0x00); // CMP #00
       this.emit("F0");
@@ -175,13 +206,13 @@ export class CodeGenerator {
 
       // Print char
       this.emit("A2");
-      this.emitByte(0x01); // load print syscall
-      this.emit("FF"); // system call
+      this.emitByte(0x01);
+      this.emit("FF");
 
       // Increment X
-      this.emit("E8"); // INX
+      this.emit("E8");
       this.emit("4C");
-      this.emitJump(loopLabel); // JMP loopLabel
+      this.emitJump(loopLabel);
 
       // Label: loop end
       this.emitLabel(endLabel);
@@ -191,50 +222,34 @@ export class CodeGenerator {
   }
 
   private handleIf(node: ASTNode) {
-    logInfo("Handling If Statement", "CodeGen");
-    const condExpr = node.children[0];
-    const block = node.children[1];
-
-    this.handleBooleanExpr(condExpr);
+    this.handleBooleanExpr(node.children[0]);
+    const jumpLabel = this.makeLabel();
 
     this.emit("D0");
-    const jumpTemp = `J${this.jumpCounter++}`;
-    this.emit(jumpTemp);
+    this.emitJumpPlaceholder(jumpLabel);
 
-    const jumpStart = this.codePtr;
-    this.visit(block);
-    const jumpEnd = this.codePtr;
-    const distance = jumpEnd - jumpStart;
-    this.jumpTable.set(jumpTemp, distance);
+    this.visit(node.children[1]);
+
+    this.labelAddresses.set(jumpLabel, this.codePtr);
   }
 
   private handleWhile(node: ASTNode) {
-    logInfo(`Handling While`, "CodeGen");
-
     const loopStart = this.codePtr;
 
-    const condExpr = node.children[0];
-    const block = node.children[1];
+    this.handleBooleanExpr(node.children[0]);
+    const jumpLabel = this.makeLabel();
 
-    this.handleBooleanExpr(condExpr);
-
-    // BNE jump if condition is False
     this.emit("D0");
-    const jumpTemp = `J${this.jumpCounter++}`;
-    this.emit(jumpTemp);
+    this.emitJumpPlaceholder(jumpLabel);
 
-    const jumpStart = this.codePtr;
-    this.visit(block);
+    this.visit(node.children[1]);
 
-    // jump back to start of loop
+    const backDistance = 256 - (this.codePtr + 2 - loopStart);
     this.emit("A2");
-    const backwardDistance = 256 - (this.codePtr + 2 - loopStart);
-    this.emit(this.toHex(backwardDistance));
+    this.emit(this.toHex(backDistance));
     this.emit("EC");
 
-    const jumpEnd = this.codePtr;
-    const distance = jumpEnd - jumpStart;
-    this.jumpTable.set(jumpTemp, distance);
+    this.labelAddresses.set(jumpLabel, this.codePtr);
   }
 
   private handleBooleanExpr(node: ASTNode): void {
@@ -249,30 +264,40 @@ export class CodeGenerator {
       return;
     }
 
-    // Load left into X (if identifier)
+    // Load left into X
     if (leftChild.name === "Identifier") {
-      const leftVar = this.mangleVarName(leftChild);
-      this.emit("AE"); // LDX absolute
-      this.emit("XX");
-      this.emit("XX");
-      if (!this.staticLocations.has(leftVar)) {
-        this.staticLocations.set(leftVar, []);
+      if (leftChild.value === undefined) {
+        throw new Error("Expected identifier name but got undefined");
       }
-      this.staticLocations.get(leftVar)!.push(this.codePtr - 2);
-    } else if (leftChild.name === "IntExpr") {
-      this.emit("A2"); // LDX #immediate
-      this.emit(this.toHex(parseInt(leftChild.value || "0")));
+      const resolvedLeft = this.lookupMangledVariable(leftChild.value);
+      if (!resolvedLeft)
+        throw new Error(`Variable ${leftChild.value} not found`);
+      const { mangled } = resolvedLeft;
+
+      this.emit("AE"); // LDX absolute
+
+      this.emitAddressPlaceholder(mangled);
+
+      console.log(
+        `Pushing patch index ${this.codePtr} for ${mangled} inside [FUNCTION NAME]`
+      );
     }
 
     if (rightChild.name === "Identifier") {
-      const rightVar = this.mangleVarName(rightChild);
-      this.emit("EC"); // CPX absolute
-      this.emit("XX");
-      this.emit("XX");
-      if (!this.staticLocations.has(rightVar)) {
-        this.staticLocations.set(rightVar, []);
+      if (rightChild.value === undefined) {
+        throw new Error("Expected identifier name but got undefined");
       }
-      this.staticLocations.get(rightVar)!.push(this.codePtr - 2);
+      const resolvedRight = this.lookupMangledVariable(rightChild.value);
+      if (!resolvedRight)
+        throw new Error(`Variable ${rightChild.value} not found`);
+      const { mangled } = resolvedRight;
+
+      this.emit("EC");
+      this.emitAddressPlaceholder(mangled);
+
+      console.log(
+        `Pushing patch index ${this.codePtr} for ${mangled} inside [FUNCTION NAME]`
+      );
     } else if (rightChild.name === "IntExpr") {
       const tempVar = `_TBOOL${this.tempVarCounter++}`;
       this.staticTable.set(tempVar, this.getNextStaticAddress());
@@ -280,20 +305,10 @@ export class CodeGenerator {
       this.emit("A9"); // LDA #immediate
       this.emit(this.toHex(parseInt(rightChild.value || "0")));
       this.emit("8D"); // STA absolute
-      this.emit("XX");
-      this.emit("XX");
-      if (!this.staticLocations.has(tempVar)) {
-        this.staticLocations.set(tempVar, []);
-      }
-      this.staticLocations.get(tempVar)!.push(this.codePtr - 2);
+      this.emitAddressPlaceholder(tempVar);
 
-      this.emit("EC"); // CPX absolute
-      this.emit("XX");
-      this.emit("XX");
-      if (!this.staticLocations.has(tempVar)) {
-        this.staticLocations.set(tempVar, []);
-      }
-      this.staticLocations.get(tempVar)!.push(this.codePtr - 2);
+      this.emit("EC");
+      this.emitAddressPlaceholder(tempVar);
     }
 
     if (op === "==") {
@@ -309,25 +324,24 @@ export class CodeGenerator {
     logInfo("Handling StringExpr", "CodeGen");
 
     const str = node.value || "";
-    let heapAddress = 255 - this.heapPtr;
+    const startAddr = this.heapPtr - str.length;
 
-    for (let i = str.length - 1; i >= 0; i--) {
-      this.code[heapAddress--] = str
-        .charCodeAt(i)
-        .toString(16)
-        .padStart(2, "0");
-      this.heapPtr++;
+    for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i);
+      this.code[this.heapPtr] = charCode.toString(16).padStart(2, "0");
+      this.heapPtr--;
     }
-    this.code[heapAddress--] = "00";
 
-    this.heapPtr++;
+    this.code[this.heapPtr] = "00";
+    this.heapPtr--;
 
-    const addrHex = this.toHex(heapAddress + 1);
-    this.emit("A2"); // Load X-register with string start
+    const addrHex = this.toHex(startAddr);
+    this.emit("A2");
     this.emit(addrHex);
 
-    this.emit("FF"); // Sys call: print string
+    this.emit("FF");
   }
+
   private handleIntAddition(node: ASTNode): void {
     const left = node.children[0];
     const right = node.children[1];
@@ -340,13 +354,7 @@ export class CodeGenerator {
     } else if (right.name === "Identifier") {
       const varName = this.mangleVarName(right);
       this.emit("6D"); // ADC var address
-      this.emit("XX");
-      this.emit("XX");
-
-      if (!this.staticLocations.has(varName)) {
-        this.staticLocations.set(varName, []);
-      }
-      this.staticLocations.get(varName)!.push(this.codePtr - 2);
+      this.emitAddressPlaceholder(varName);
     }
   }
 
@@ -372,44 +380,60 @@ export class CodeGenerator {
   }
 
   private emitLabel(label: string) {
-    // Optional: store position for backpatching if needed
+    this.labelAddresses.set(label, this.codePtr);
   }
 
   private emitJump(label: string) {
-    // Reserve 2 bytes for jump (to be backpatched later)
-    this.emitByte(0x00);
-    this.emitByte(0x00);
-    // Track jump target in your jump table
+    const index = this.codePtr;
+    this.emitByte(0x00); // low byte placeholder
+    this.emitByte(0x00); // high byte placeholder
+
+    const indices = this.jumpTable.get(label) || [];
+    indices.push(index);
+    this.jumpTable.set(label, indices);
   }
 
   private backpatchJumpTable() {
-    logInfo("Backpatching Jump Table...", "CodeGen");
-    for (const [label, dist] of this.jumpTable) {
-      const hex = this.toHex(dist);
-      for (let i = 0; i < this.code.length; i++) {
-        if (this.code[i] === label) {
-          this.code[i] = hex;
-        }
+    for (const [label, indices] of this.jumpTable) {
+      const targetAddr = this.labelAddresses.get(label);
+      if (targetAddr === undefined) continue;
+      const lowByte = this.toHex(targetAddr & 0xff);
+      const highByte = this.toHex((targetAddr >> 8) & 0xff);
+      for (const index of indices) {
+        this.code[index] = lowByte;
+        this.code[index + 1] = highByte;
+        console.log(
+          ` → Jump patched [${label}] at [${index}] with [${lowByte} ${highByte}]`
+        );
       }
     }
   }
   private backpatchStaticTable() {
-    logInfo("Backpatching Static Table...", "CodeGen");
-    for (const [varName, addr] of this.staticTable) {
-      const patchIndices = this.staticLocations.get(varName);
-      if (patchIndices) {
-        for (const index of patchIndices) {
-          this.code[index] = this.toHex(addr);
-          this.code[index + 1] = "00";
-        }
+    for (const [mangled, addr] of this.staticTable) {
+      const indices = this.staticLocations.get(mangled) || [];
+
+      const lowByte = this.toHex(addr & 0xff);
+      const highByte = this.toHex((addr >> 8) & 0xff);
+
+      console.log(
+        `Backpatching ${mangled} at indices [${indices}] with addr 0x${lowByte}${highByte}`
+      );
+
+      for (const index of indices) {
+        this.code[index] = lowByte;
+        this.code[index + 1] = highByte;
+        console.log(
+          ` → Patched [${index}, ${index + 1}] with [${lowByte} ${highByte}]`
+        );
       }
     }
   }
 
-  private getNextStaticAddress(): number {
-    return 0x2d + this.staticTable.size;
-  }
   mangleVarName(node: ASTNode): string {
+    const sym = this.symbols.find((s) => s.name === node.value);
+    if (!sym)
+      throw new Error(`Variable ${node.value} not found in symbol table`);
+
     if (!node) {
       throw new Error("mangleVarName received undefined node!");
     }
@@ -421,7 +445,7 @@ export class CodeGenerator {
         `mangleVarName: node.value is not string (got ${node.value})`
       );
     }
-    return `_T${node.value}`;
+    return `${node.value}`;
   }
 
   private toHex(n: number): string {
@@ -434,7 +458,7 @@ export class CodeGenerator {
       return;
     }
 
-    output.innerText === "";
+    output.innerText = "";
 
     logInfo(`Displaying code for PID: ${this.pid}`, "CodeGen");
     logInfo(`Program ${this.pid} Complete\n`, "CodeGen");
@@ -453,27 +477,97 @@ export class CodeGenerator {
     output.appendChild(section);
   }
   private allocateStringInHeap(value: string): number {
-    // Check if already allocated
     if (this.heapTable[value] !== undefined) {
       return this.heapTable[value];
     }
 
-    const startAddr = this.heapPtr - value.length;
+    const requiredSpace = value.length + 1; // +1 for null terminator
+    const startAddr = this.heapPtr - requiredSpace + 1;
+
+    if (startAddr <= this.getNextStaticAddress()) {
+      throw new Error(
+        `Heap memory (${startAddr}) overlapped static memory (${this.getNextStaticAddress()}).`
+      );
+    }
+
     for (let i = 0; i < value.length; i++) {
       const charCode = value.charCodeAt(i);
-      this.emit("A9");
-      this.emitByte(charCode); // LDA #char
-      this.emit("8D");
-      this.emitAddress(startAddr + i); // STA addr
+      this.code[this.heapPtr--] = charCode.toString(16).padStart(2, "0");
     }
-    // Null terminator
-    this.emit("A9");
-    this.emitByte(0x00);
-    this.emit("8D");
-    this.emitAddress(startAddr + value.length);
 
-    this.heapPtr = startAddr - 1;
+    this.code[this.heapPtr--] = "00"; // null terminator
+
     this.heapTable[value] = startAddr;
     return startAddr;
+  }
+
+  private lookupMangledVariable(
+    rawName: string
+  ): { mangled: string; symbol: SymbolInfo } | null {
+    // Check from innermost to outermost
+    for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+      const scopeLevel = this.scopeStack[i];
+      const sym = this.symbols.find(
+        (s) => s.name === rawName && s.scopeLevel === scopeLevel
+      );
+      if (sym) {
+        const mangled = `_S${scopeLevel}_T${sym.name}`;
+        return { mangled, symbol: sym };
+      }
+    }
+    console.warn(`Warning: Variable ${rawName} not found in scope stack.`);
+    return null;
+  }
+
+  private emitJumpPlaceholder(label: string): void {
+    const index = this.codePtr;
+    this.emit("00"); // Placeholder low byte
+    this.emit("00"); // Placeholder high byte
+
+    const indices = this.jumpTable.get(label) || [];
+    indices.push(index);
+    this.jumpTable.set(label, indices);
+  }
+  private emitAddressPlaceholder(mangled: string) {
+    if (!this.staticTable.has(mangled)) {
+      const nextStaticAddr = this.getNextStaticAddress();
+      this.staticTable.set(mangled, nextStaticAddr);
+    }
+
+    if (!this.staticLocations.has(mangled)) {
+      this.staticLocations.set(mangled, []);
+    }
+
+    const patchList = this.staticLocations.get(mangled)!;
+    patchList.push(this.codePtr); // store the index where we’ll patch later
+
+    // Emit two placeholder bytes (low and high)
+    this.emit("XX");
+    this.emit("XX");
+
+    console.log(
+      ` → Storing placeholder for ${mangled} at [${this.codePtr - 2}]`
+    );
+    logInfo("Static Table Addresses:", "CodeGen");
+    for (const [key, addr] of this.staticTable) {
+      logInfo(` → ${key} → 0x${addr.toString(16).padStart(2, "0")}`, "CodeGen");
+    }
+  }
+
+  private getNextStaticAddress(): number {
+    let addr = 0x2d;
+    const usedAddresses = new Set([...this.staticTable.values()]);
+
+    while (usedAddresses.has(addr)) {
+      addr++;
+    }
+
+    if (addr >= this.heapPtr) {
+      throw new Error(
+        `Static memory (${addr}) overlapped heap memory (${this.heapPtr}).`
+      );
+    }
+
+    return addr;
   }
 }

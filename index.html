@@ -128,6 +128,20 @@
           <button class="dropdown-item" data-value="case38">
             Combined Test
           </button>
+          <button class="dropdown-item" data-value="case39">Multi-Scope</button>
+          <button class="dropdown-item" data-value="case40">Basic Scope</button>
+          <button class="dropdown-item" data-value="case41">
+            Nested Scope
+          </button>
+          <button class="dropdown-item" data-value="case42">
+            Nested Scope w/ Shadowing
+          </button>
+          <button class="dropdown-item" data-value="case43">
+            Multi-Var Scope
+          </button>
+          <button class="dropdown-item" data-value="case44">
+            Nested While Loop
+          </button>
         </div>
       </div>
 
@@ -401,6 +415,80 @@ $
 } $
 
 }
+`,
+        case39: `{
+    int a
+    a = 1
+    {
+        int a
+        a = 2
+        print(a)  
+    }
+    print(a)     
+}
+$
+
+`,
+        case40: `{
+    int a
+    a = 5
+    print(a)
+}
+$
+`,
+        case41: `{
+    int a
+    a = 1
+    {
+        int b
+        b = 2
+        print(a)
+        print(b)
+    }
+    print(a)
+}
+$
+`,
+        case42: `{
+    int a
+    a = 1
+    {
+        int a
+        a = 2
+        print(a)
+    }
+    print(a)
+}
+$
+`,
+        case43: `{
+    int a
+    int b
+    a = 4
+    b = 5
+    {
+        int c
+        c = 6
+        print(a)
+        print(b)
+        print(c)
+    }
+}
+$
+`,
+        case44: `{
+    int a
+    int b
+    a = 0
+    b = 0
+    while (a == 0) {
+        while (b == 0) {
+            print(a)
+            print(b)
+        }
+    }
+}
+$
 `,
       };
 

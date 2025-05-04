@@ -69,15 +69,20 @@ export class Parser {
     console.log("getRoot() returned:", root);
 
     if (root) {
-      const analyzer = new SemanticAnalyzer(root);
-      analyzer.analyze();
+      const semanticAnalyzer = new SemanticAnalyzer(root);
+      semanticAnalyzer.analyze();
 
-      if (analyzer.errors.length === 0) {
-        const generator = new CodeGenerator(root, this.programID);
+      if (semanticAnalyzer.errors.length === 0) {
+        const generator = new CodeGenerator(
+          root,
+          this.programID,
+          semanticAnalyzer.symbols
+        );
+
         generator.generate();
       } else {
         this.reportError(
-          `Semantic Analyzer Failed with [${analyzer.errors.length}] Errors`,
+          `Semantic Analyzer Failed with [${semanticAnalyzer.errors.length}] Errors`,
           "SemanticAnalyzer"
         );
       }
@@ -94,7 +99,7 @@ export class Parser {
 
     this.parseBlock();
 
-    this.match("EOP"); // edit
+    this.match("EOP");
   }
   private parseBlock(): void {
     logInfo(`parseBlock()`, "Parser");

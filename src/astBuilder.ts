@@ -47,6 +47,7 @@ export class ASTBuilder {
         }
         return block;
       }
+
       case "ID": {
         const token = cstNode.children.find((c) => c.name.startsWith("[ID]"));
         if (token) {
@@ -97,7 +98,6 @@ export class ASTBuilder {
         return whileNode;
       }
       case "Expr": {
-        // Boolean expressions (already handled)
         if (
           cstNode.children.length === 3 &&
           cstNode.children[1].name.startsWith("[BOOL_OP]")
@@ -112,7 +112,6 @@ export class ASTBuilder {
           return boolExpr;
         }
 
-        // NEW: Arithmetic expressions (like a + 1)
         if (
           cstNode.children.length === 3 &&
           cstNode.children[1].name.startsWith("[INT_OP]")
@@ -127,13 +126,11 @@ export class ASTBuilder {
           return intExpr;
         }
 
-        // Simple expressions (already handled)
         if (cstNode.children.length === 1) {
           const child = cstNode.children[0];
           return this.walk(child);
         }
 
-        // Default error
         reportError(
           `ASTBuilder: Unrecognized Expr structure (children: ${cstNode.children
             .map((c) => c.name)
@@ -187,7 +184,7 @@ export class ASTBuilder {
       }
 
       case "AssignmentStatement": {
-        const [idCST, , exprCST] = cstNode.children; // skip ASSIGN_OP
+        const [idCST, , exprCST] = cstNode.children;
         const id = idCST.name.split("] ")[1];
 
         const assignNode = new ASTNode("Assignment");
