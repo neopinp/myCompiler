@@ -5,11 +5,13 @@ export class CSTNode {
   public name: string;
   public children: CSTNode[];
   public parent: CSTNode | null;
+  public value?: string;
 
-  constructor(name: string, parent: CSTNode | null = null) {
+  constructor(name: string, parent: CSTNode | null = null, value?: string) {
     this.name = name;
     this.children = [];
     this.parent = parent;
+    this.value = this.value;
   }
 }
 
@@ -36,7 +38,7 @@ export class CST {
     }
   }
 
-  public addLeafNode(token: Token): void {
+  public addLeafNode(token: Token, value?: string): void {
     const leafName = `[${token.type}] ${token.value}`;
     const leafNode = new CSTNode(leafName, this.currentNode);
     this.currentNode.children.push(leafNode);
@@ -48,17 +50,15 @@ export class CST {
       console.error("CST output element not found!");
       return;
     }
-  
+
     const treeHTML = this.generateHTML(this.root);
-  
+
     const cstTitle = document.createElement("h3");
     cstTitle.textContent = "Concrete Syntax Tree (CST)";
     outputElement.appendChild(cstTitle);
     outputElement.appendChild(treeHTML);
-  
-
   }
-  
+
   private generateHTML(node: CSTNode): HTMLElement {
     const li = document.createElement("li");
     li.textContent = node.name;

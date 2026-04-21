@@ -106,6 +106,12 @@ textarea {
   background: #f8f9fa;
   color: black;
 }
+#codeOutput pre {
+  white-space: pre-wrap;
+  word-wrap: normal;
+  overflow-wrap: break-word;
+}
+
 
 .error {
   color: red;
@@ -123,6 +129,11 @@ textarea {
 
 .info.lexer {
   color: blue;
+  font-weight: bold;
+}
+
+.info.codegen {
+  color: purple;
   font-weight: bold;
 }
 

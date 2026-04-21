@@ -3,9 +3,9 @@ import { CST } from "./cst.js";
 import { logDebug, logInfo } from "./utils.js";
 import { logError, logWarning } from "./utils.js";
 import { ASTBuilder } from "./astBuilder.js";
-import { AST } from "./ast.js";
+import { AST, ASTNode } from "./ast.js";
 import { SemanticAnalyzer } from "./semanticAnalyzer.js";
-
+import { CodeGenerator } from "./codegenerator.js";
 
 export class Parser {
   private tokens: Token[];
@@ -53,38 +53,45 @@ export class Parser {
     }
   }
 
-  public parse(): CST | null {
+  public parse(): ASTNode | null {
     logInfo(`Parsing Program ${this.programID}`, "Parser");
     this.parseProgram();
-    logInfo(`Parsing Complete with: ${this.errors.length} errors\n`, "Parser");
+    logInfo(`Parsing Complete with: ${this.errors.length} errors`, "Parser");
 
-    if (this.errors.length === 0) {
-      logInfo(`DISPLAYING CST FOR PROGRAM ${this.programID}\n`, "Parser");
-      this.cst.display();
+    this.cst.display();
 
-      const astBuilder = new ASTBuilder();
-      const ast: AST = astBuilder.build(this.cst.getRoot());
+    const astBuilder = new ASTBuilder();
+    const ast: AST = astBuilder.build(this.cst.getRoot());
 
-      logInfo(`AST - DISPLAYING AST FOR PROGRAM ${this.programID}`, "Parser");
-      ast.display();
+    ast.display();
 
-      const root = ast.getRoot();
-      if (root) {
-        logInfo(`SEMANTIC - Starting Semantic Analysis`, "SemanticAnalyzer");
-        const analyzer = new SemanticAnalyzer(root);
-        analyzer.analyze();
-        
+    const root = ast.getRoot();
+    console.log("getRoot() returned:", root);
+
+    if (root) {
+      const semanticAnalyzer = new SemanticAnalyzer(root);
+      semanticAnalyzer.analyze();
+
+      if (semanticAnalyzer.errors.length === 0) {
+        const generator = new CodeGenerator(
+          root,
+          this.programID,
+          semanticAnalyzer.symbols
+        );
+
+        generator.generate();
       } else {
-        logError(
-          "Semantic Analysis skipped: AST root is null.",
-          0,
-          0,
+        this.reportError(
+          `Semantic Analyzer Failed with [${semanticAnalyzer.errors.length}] Errors`,
           "SemanticAnalyzer"
         );
       }
+      console.log("Returning AST from parser");
+      return root;
+    } else {
+      logError("AST root was null", 0, 0, "Parser");
       return null;
     }
-    return this.cst;
   }
 
   private parseProgram(): void {
@@ -92,7 +99,7 @@ export class Parser {
 
     this.parseBlock();
 
-    this.match("EOP"); // edit
+    this.match("EOP");
   }
   private parseBlock(): void {
     logInfo(`parseBlock()`, "Parser");
@@ -185,14 +192,9 @@ export class Parser {
     const tokenType = this.currentToken.type;
 
     if (tokenType === "LPAREN") {
+      // Handle (expr)
       this.match("LPAREN");
       this.parseExpr();
-
-      if (this.currentToken.type === "BOOL_OP") {
-        this.match("BOOL_OP");
-        this.parseExpr();
-      }
-
       if (!this.match("RPAREN")) {
         this.reportError("Expected [RPAREN] to close parenthesis", "Parser");
       }
@@ -202,22 +204,30 @@ export class Parser {
       this.parseStringExpr();
     } else if (tokenType === "BOOLEAN_LITERAL") {
       this.match("BOOLEAN_LITERAL");
-      if (this.currentToken.type === "BOOL_OP") {
-        this.match("BOOL_OP");
-        this.parseExpr();
-      }
     } else if (tokenType === "ID") {
       this.parseID();
-      if (this.currentToken.type === "BOOL_OP") {
-        this.match("BOOL_OP");
-        this.parseExpr();
-      }
     } else {
       this.reportError(
         `Unexpected Token [${this.currentToken.value}] in expression`,
         "Parser"
       );
       this.advance();
+    }
+
+    // After first term, check for INT_OP or BOOL_OP
+    while (
+      this.currentToken.type === "INT_OP" ||
+      this.currentToken.type === "BOOL_OP"
+    ) {
+      const opType = this.currentToken.type;
+
+      if (opType === "INT_OP") {
+        this.match("INT_OP");
+        this.parseExpr(); // recursively parse right side
+      } else if (opType === "BOOL_OP") {
+        this.match("BOOL_OP");
+        this.parseExpr(); // recursively parse right side
+      }
     }
 
     this.cst.endNonLeafNode();
@@ -252,24 +262,6 @@ export class Parser {
     this.cst.endNonLeafNode();
   }
 
-  private parseBooleanExpr(): void {
-    this.cst.startNonLeafNode("BooleanExpr");
-
-    if (this.currentToken.type === "LPAREN") {
-      this.match("LPAREN");
-      this.parseExpr();
-      this.match("BOOL_OP");
-      this.parseExpr();
-      this.match("RPAREN");
-    } else if (this.currentToken.type === "BOOLEAN_LITERAL") {
-      this.match("BOOLEAN_LITERAL");
-    } else {
-      this.reportError(`Invalid BooleanExpr`, "Parser");
-    }
-
-    this.cst.endNonLeafNode();
-  }
-
   private parseID(): void {
     this.cst.startNonLeafNode("ID");
 
@@ -287,7 +279,6 @@ export class Parser {
         this.parseExpr();
         this.match(TokenType.RPAREN);
         this.parseBlock();
-
       } else {
         this.reportError("Expected [LPAREN] after IF", "Parser");
       }

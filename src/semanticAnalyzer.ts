@@ -2,20 +2,18 @@ import { logInfo, logError } from "./utils.js";
 import { ASTNode } from "./ast.js";
 import { appendPhaseSeparator } from "./utils.js"; // make sure you import it!
 
-
 interface SymbolInfo {
   name: string;
   type: string;
   line: number;
   column: number;
   scopeLevel: number;
-
 }
 
 export class SemanticAnalyzer {
   symbolTableStack: Map<string, SymbolInfo>[];
   errors: string[];
-  symbols: SymbolInfo[]; 
+  symbols: SymbolInfo[];
 
   constructor(private ast: ASTNode) {
     this.symbolTableStack = [new Map()];
@@ -49,10 +47,46 @@ export class SemanticAnalyzer {
       case "Print":
         this.handlePrint(node);
         break;
-      case "IntExpr":
-        return "int";
-      case "BooleanExpr":
-        return "boolean";
+      case "IntExpr": {
+        if (node.value !== undefined) {
+          return "int";
+        } else {
+          this.reportError(`Invalid IntExpr structure (no value).`);
+          return "int";
+        }
+      }
+
+      case "BooleanExpr": {
+        if (node.children.length === 2) {
+          const left = node.children[0];
+          const right = node.children[1];
+
+          if (
+            left.name.startsWith("MISSING") ||
+            right.name.startsWith("MISSING")
+          ) {
+            this.reportError(`BooleanExpr has missing operands.`);
+            return "boolean";
+          }
+
+          const leftType = this.visit(left);
+          const rightType = this.visit(right);
+
+
+          if (leftType !== rightType) {
+            this.reportError(
+              `Type mismatch in boolean comparison: '${leftType}' == '${rightType}'.`
+            );
+          }
+          return "boolean";
+        } else {
+          this.reportError(
+            `Invalid BooleanExpr structure (expected 2 children, got ${node.children.length}).`
+          );
+          return "boolean";
+        }
+      }
+
       case "StringExpr":
         return "string";
       case "Identifier": {
@@ -64,14 +98,12 @@ export class SemanticAnalyzer {
         }
         return symbol.type;
       }
+      case "BooleanLiteral":
+        return "boolean";
 
       case "If":
-      case "While": {
-        this.handleWhile(node); 
+        this.handleIf(node);
         break;
-      }
-
-      case "If":
       case "While": {
         this.handleWhile(node);
       }
@@ -109,19 +141,21 @@ export class SemanticAnalyzer {
       return;
     }
 
-    const expectedType = this.lookupVariable(varName);
+    const expectedSymbol = this.lookupVariable(varName);
     const actualType = this.visit(exprNode);
 
-    if (!expectedType) {
+    if (!expectedSymbol) {
       this.reportError(
-        `Assignment to undeclared variable '${varName}'. `,
+        `Assignment to undeclared variable '${varName}'.`,
         node.line,
         node.column
       );
       return;
     }
 
-    if (actualType && expectedType?.type !== actualType) {
+    const expectedType = expectedSymbol.type;
+
+    if (actualType && expectedType !== actualType) {
       this.reportError(
         `Type mismatch: Cannot assign ${actualType} to ${expectedType} variable '${varName}'.`,
         node.line,
@@ -153,6 +187,29 @@ export class SemanticAnalyzer {
     if (condType !== "boolean") {
       this.reportError(
         "While condition must evaluate to a boolean.",
+        condExpr.line,
+        condExpr.column
+      );
+    }
+
+    this.enterScope();
+    this.visit(bodyBlock);
+    this.exitScope();
+  }
+
+  handleIf(node: ASTNode) {
+    const condExpr = node.children[0];
+    const bodyBlock = node.children[1];
+
+    if (!condExpr || !bodyBlock) {
+      this.reportError("Bad While Loop.", node.line, node.column);
+      return;
+    }
+
+    const condType = this.visit(condExpr);
+    if (condType !== "boolean") {
+      this.reportError(
+        "If condition must evaluate to a boolean.",
         condExpr.line,
         condExpr.column
       );
@@ -220,7 +277,6 @@ export class SemanticAnalyzer {
     const output = document.getElementById("output");
     var programID = 0;
     if (!output) return;
-    
 
     const label = document.createElement("h3");
     label.textContent = "Symbol Table";
@@ -248,7 +304,5 @@ export class SemanticAnalyzer {
     output.appendChild(label);
     output.appendChild(table);
     appendPhaseSeparator();
-    programID++;
-
   }
 }

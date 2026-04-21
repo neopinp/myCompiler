@@ -96,6 +96,52 @@
           <button class="dropdown-item" data-value="case26">
             While Statement
           </button>
+          <button class="dropdown-item" data-value="case27">
+            While Statement II
+          </button>
+          <button class="dropdown-item" data-value="case28">
+            - CODE GENERATION -
+          </button>
+          <button class="dropdown-item" data-value="case29">Var Decl</button>
+          <button class="dropdown-item" data-value="case30">
+            Assignment Test
+          </button>
+          <button class="dropdown-item" data-value="case31">
+            Boolean Comparison
+          </button>
+          <button class="dropdown-item" data-value="case32">
+            Print Identifier
+          </button>
+          <button class="dropdown-item" data-value="case33">
+            Print Boolean
+          </button>
+          <button class="dropdown-item" data-value="case34">
+            If Statement
+          </button>
+          <button class="dropdown-item" data-value="case35">While Loop</button>
+          <button class="dropdown-item" data-value="case36">
+            Int Addition
+          </button>
+          <button class="dropdown-item" data-value="case37">
+            String Print
+          </button>
+          <button class="dropdown-item" data-value="case38">
+            Combined Test
+          </button>
+          <button class="dropdown-item" data-value="case39">Multi-Scope</button>
+          <button class="dropdown-item" data-value="case40">Basic Scope</button>
+          <button class="dropdown-item" data-value="case41">
+            Nested Scope
+          </button>
+          <button class="dropdown-item" data-value="case42">
+            Nested Scope w/ Shadowing
+          </button>
+          <button class="dropdown-item" data-value="case43">
+            Multi-Var Scope
+          </button>
+          <button class="dropdown-item" data-value="case44">
+            Nested While Loop
+          </button>
         </div>
       </div>
 
@@ -108,6 +154,8 @@
       ></textarea>
       Warnings & Errors
       <div id="output2" rows="10" cols="80"></div>
+      <h2>Machine Code</h2>
+      <div id="codeOutput"></div>
       <button id="run-button">Compile</button>
     </div>
     <div class="rightSide">
@@ -293,6 +341,155 @@ $
 }
 $
 `,
+        case27: `{
+  int a
+  a = 1
+  while (a == 1) {
+    print(a)
+    a = 0
+  }
+}
+$`,
+        case28: ` - CODE GENERATION 1 SCOPE - `,
+        case29: `{ int a } $
+
+`,
+        case30: `{ a = 5 } $
+`,
+        case31: `{ 
+  int x 
+  x = 1 
+  print(x == 1) 
+} $
+
+
+`,
+        case32: `{ 
+  int a 
+  a = 5 
+  print(a) 
+} $
+
+
+`,
+        case33: ``,
+        case34: `{
+  int x
+  x = 1
+  if (x == 1) {
+    print(x)
+  }
+}
+$
+
+
+
+`,
+        case35: `{
+  int a
+  a = 3
+  while (a == 3) {
+    print(a)
+    a= 0
+  }
+}
+$
+
+
+
+
+
+`,
+        case36: `{ b = a + 3 } $
+
+`,
+        case37: `{ print("hello") } $
+
+`,
+        case38: `{ int a
+  a = 3
+  print(a)
+  if (a == 3) {
+    print("yes")
+  }
+} $
+
+}
+`,
+        case39: `{
+    int a
+    a = 1
+    {
+        int a
+        a = 2
+        print(a)  
+    }
+    print(a)     
+}
+$
+
+`,
+        case40: `{
+    int a
+    a = 5
+    print(a)
+}
+$
+`,
+        case41: `{
+    int a
+    a = 1
+    {
+        int b
+        b = 2
+        print(a)
+        print(b)
+    }
+    print(a)
+}
+$
+`,
+        case42: `{
+    int a
+    a = 1
+    {
+        int a
+        a = 2
+        print(a)
+    }
+    print(a)
+}
+$
+`,
+        case43: `{
+    int a
+    int b
+    a = 4
+    b = 5
+    {
+        int c
+        c = 6
+        print(a)
+        print(b)
+        print(c)
+    }
+}
+$
+`,
+        case44: `{
+    int a
+    int b
+    a = 0
+    b = 0
+    while (a == 0) {
+        while (b == 0) {
+            print(a)
+            print(b)
+        }
+    }
+}
+$
+`,
       };
 
       // Handle dropdown item selection
@@ -312,7 +509,7 @@ $
         const sourceCode = document.getElementById("sourceCode");
 
         sourceCode.addEventListener("input", function () {
-          this.style.height = "auto"; 
+          this.style.height = "auto";
           this.style.height = Math.min(this.scrollHeight, 400) + "px";
         });
       });

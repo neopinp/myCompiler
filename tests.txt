@@ -220,4 +220,16 @@ If Statements
 $
 
 
+CODE GENERATION 
 
+While Boolean Compare 
+-----------------------------------------------------------
+{
+  int a
+  a = 1
+  while (a == 1) {
+    print(a)
+    a = 0
+  }
+}
+$

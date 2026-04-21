@@ -1,7 +1,7 @@
 import { Lexer } from "./lexer.js";
 import { logInfo } from "./utils.js";
-import { Token } from "./token.js";
 import { Parser } from "./parser.js";
+import { Token } from "./token.js";
 
 export function runCompiler(): void {
   const inputElement = document.getElementById(
@@ -10,13 +10,15 @@ export function runCompiler(): void {
   const outputElement = document.getElementById("output")!;
   const outputElement2 = document.getElementById("output2")!;
   const cstOutputElement = document.getElementById("outputCST");
+  const codeGen = document.getElementById("codeOutput");
 
   outputElement.innerHTML = "";
   outputElement2.innerHTML = "";
   if (cstOutputElement) cstOutputElement.innerHTML = "";
+  if (codeGen) codeGen.innerHTML = "";
 
   const sourceCode = inputElement.value;
-  logInfo("Lexer - Lexing Started...");
+  logInfo("Lexing Started...");
 
   const lexer = new Lexer(sourceCode);
   lexer.tokenize();
@@ -42,6 +44,7 @@ export function runCompiler(): void {
     parser.parse();
   });
 }
+
 export function reportWarningsandErrors(lexer: Lexer): void {
   // RETURN WARNINGS FIRST
   if (lexer.warnings.length === 0 && lexer.errors.length === 0) {
